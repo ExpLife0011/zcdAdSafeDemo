@@ -6,7 +6,10 @@
 //#define _USE_WINHTTP_
 #ifdef _USE_WINHTTP_
 #include "WinHttpHook.h"
+#elif defined(_USE_WININET)
+#include "WinInetHook.h"
 #else
+#include "WinHttpHook.h"
 #include "WinInetHook.h"
 #endif
 
@@ -23,7 +26,8 @@
 
 HINSTANCE g_hHinstance = NULL;
 HHOOK g_hHook;
-BOOL g_bApiHook = FALSE;
+BOOL g_bWinHttpApiHook = FALSE;
+BOOL g_bWinInetApiHook = FALSE;
 
 ///////////////////
 // log
@@ -84,16 +88,27 @@ LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam)
 //	return 1;
 
 #ifdef _USE_WINHTTP_
-	if (g_bApiHook == FALSE)
+	if (g_bWinHttpApiHook == FALSE)
 	{
 		WriteAGLog("WinHttpInstallHooks");
-		g_bApiHook = WinHttpInstallHooks();
+		g_bWinHttpApiHook = WinHttpInstallHooks();
 	}
-#else
-	if (g_bApiHook==FALSE)
+#elif defined(_USE_WININET_)
+	if (g_bWinInetApiHook==FALSE)
 	{
 		WriteAGLog("WinInetInstallHooks");
-		g_bApiHook = WinInetInstallHooks();
+		g_bWinInetApiHook = WinInetInstallHooks();
+	}
+#else
+	if (g_bWinHttpApiHook == FALSE)
+	{
+		WriteAGLog("WinHttpInstallHooks");
+		g_bWinHttpApiHook = WinHttpInstallHooks();
+	}
+	if (g_bWinInetApiHook==FALSE)
+	{
+		WriteAGLog("WinInetInstallHooks");
+		g_bWinInetApiHook = WinInetInstallHooks();
 	}
 #endif
 	
@@ -115,7 +130,10 @@ BOOL DisableKeyboardCapture()
 {
 #ifdef _USE_WINHTTP_
 	WinHttpRemoveHooks();
+#elif defined(_USE_WININET_)
+	WinInetRemoveHooks();
 #else
+	WinHttpRemoveHooks();
 	WinInetRemoveHooks();
 #endif
 	return UnhookWindowsHookEx(g_hHook);
