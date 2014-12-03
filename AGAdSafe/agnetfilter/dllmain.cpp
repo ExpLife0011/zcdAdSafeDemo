@@ -4,9 +4,10 @@
 
 //begin
 //#define _USE_WINHTTP_
+//#define _USE_WININET_
 #ifdef _USE_WINHTTP_
 #include "WinHttpHook.h"
-#elif defined(_USE_WININET)
+#elif defined(_USE_WININET_)
 #include "WinInetHook.h"
 #else
 #include "WinHttpHook.h"
