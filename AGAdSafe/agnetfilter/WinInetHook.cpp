@@ -41,21 +41,21 @@ private:
 };
 ////////////////////////
 
-static CWinInetHook * pHook = NULL;
+static CWinInetHook * gs_pWinInetHook = NULL;
 
 BOOL WinInetInstallHooks(void)
 {
-	if(!pHook)
-		pHook = new CWinInetHook();
-	return pHook!=NULL;
+  if(!gs_pWinInetHook)
+    gs_pWinInetHook = new CWinInetHook();
+  return gs_pWinInetHook!=NULL;
 }
 
 void WinInetRemoveHooks(void)
 {
-	if(pHook)
+  if(gs_pWinInetHook)
 	{
-		delete pHook;
-		pHook = NULL;
+    delete gs_pWinInetHook;
+    gs_pWinInetHook = NULL;
 		WriteAGLog("WinInetRemoveHooks");
 	}
 }
@@ -68,13 +68,13 @@ HINTERNET __stdcall InternetOpenW_Hook(LPCWSTR lpszAgent, DWORD dwAccessType, LP
 
 	HINTERNET ret = NULL;
 	__try{
-		if(pHook)
+    if(gs_pWinInetHook)
 		{
-			ret = pHook->InternetOpenW(lpszAgent, dwAccessType, lpszProxy, lpszProxyBypass, dwFlags);
+      ret = gs_pWinInetHook->InternetOpenW(lpszAgent, dwAccessType, lpszProxy, lpszProxyBypass, dwFlags);
 		}
 		else
 		{
-			WriteAGLog("InternetOpenW_Hook pHook == NULL");
+			WriteAGLog("InternetOpenW_Hook gs_pWinInetHook == NULL");
 		}
 	}__except(1){
 		WriteAGLog("InternetOpenW_Hook Failed");
@@ -92,11 +92,11 @@ HINTERNET __stdcall InternetOpenA_Hook(LPCSTR lpszAgent, DWORD dwAccessType, LPC
 	//
 	HINTERNET ret = NULL;
 	__try{
-		if(pHook)
-			ret = pHook->InternetOpenA(lpszAgent, dwAccessType, lpszProxy, lpszProxyBypass, dwFlags);
+    if(gs_pWinInetHook)
+      ret = gs_pWinInetHook->InternetOpenA(lpszAgent, dwAccessType, lpszProxy, lpszProxyBypass, dwFlags);
 		else
 		{
-			WriteAGLog("InternetOpenA_Hook pHook == NULL");
+			WriteAGLog("InternetOpenA_Hook gs_pWinInetHook == NULL");
 		}
 	}__except(1){
 		WriteAGLog("InternetOpenA_Hook Failed");
@@ -109,10 +109,10 @@ HINTERNET __stdcall InternetConnectW_Hook(HINTERNET hInternet, LPCWSTR lpszServe
 	WriteAGLog("InternetConnectW_Hook Begin");
 	HINTERNET ret = NULL;
 	__try{
-		if(pHook)
+    if(gs_pWinInetHook)
 		{
 			hInternet = InternetOpenW(L"safe", 0, NULL, NULL, 0);
-			ret = pHook->InternetConnectW(hInternet, lpszServerName, nServerPort, lpszUserName, lpszPassword, dwService, dwFlags, dwContext);
+      ret = gs_pWinInetHook->InternetConnectW(hInternet, lpszServerName, nServerPort, lpszUserName, lpszPassword, dwService, dwFlags, dwContext);
 		}
 	}__except(1){
 		WriteAGLog("InternetConnectW_Hook Failed");
@@ -126,10 +126,10 @@ HINTERNET __stdcall InternetConnectA_Hook(HINTERNET hInternet, LPCSTR lpszServer
 	WriteAGLog("InternetConnectA_Hook Begin");
 	HINTERNET ret = NULL;
 	__try{
-		if(pHook)
+    if(gs_pWinInetHook)
 		{
 			hInternet = InternetOpenA("safe", 0, NULL, NULL, 0);
-			ret = pHook->InternetConnectA(hInternet, lpszServerName, nServerPort, lpszUserName, lpszPassword, dwService, dwFlags, dwContext);
+      ret = gs_pWinInetHook->InternetConnectA(hInternet, lpszServerName, nServerPort, lpszUserName, lpszPassword, dwService, dwFlags, dwContext);
 		}
 	}__except(1){
 		WriteAGLog("InternetConnectW_Hook Failed");
@@ -161,8 +161,8 @@ hookOpenA(true)
 
 CWinInetHook::~CWinInetHook(void)
 {
-	if(pHook == this)
-		pHook = NULL;
+  if(gs_pWinInetHook == this)
+    gs_pWinInetHook = NULL;
 
 	DeleteCriticalSection(&cs);
 	WriteAGLog("~CWinInetHook");

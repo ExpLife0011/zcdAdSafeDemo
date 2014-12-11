@@ -56,21 +56,21 @@ private:
 };
 
 
-static CWinHttpHook * pHook = NULL;
+static CWinHttpHook * gs_pWinHttpHook = NULL;
 
 BOOL WinHttpInstallHooks(void)
 {
-	if(!pHook)
-		pHook = new CWinHttpHook();
-	return pHook!=NULL;
+  if(!gs_pWinHttpHook)
+    gs_pWinHttpHook = new CWinHttpHook();
+  return gs_pWinHttpHook!=NULL;
 }
 
 void WinHttpRemoveHooks(void)
 {
-	if(pHook)
+  if(gs_pWinHttpHook)
 	{
-		delete pHook;
-		pHook = NULL;
+    delete gs_pWinHttpHook;
+    gs_pWinHttpHook = NULL;
 		WriteAGLog("WinHttpRemoveHooks");
 	}
 }
@@ -84,9 +84,9 @@ HINTERNET __stdcall WinHttpOpenW_Hook(LPCWSTR lpszAgent, DWORD dwAccessType, LPC
 
 	HINTERNET ret = NULL;
 	__try{
-		if(pHook)
+    if(gs_pWinHttpHook)
 		{
-			ret = pHook->WinHttpOpenW(lpszAgent, dwAccessType, lpszProxy, lpszProxyBypass, dwFlags);
+      ret = gs_pWinHttpHook->WinHttpOpenW(lpszAgent, dwAccessType, lpszProxy, lpszProxyBypass, dwFlags);
 		}
 	}__except(1){}
 	return ret;
@@ -102,13 +102,13 @@ HINTERNET __stdcall WinHttpOpen_Hook(LPCWSTR lpszAgent, DWORD dwAccessType, LPCW
 
 	HINTERNET ret = NULL;
 	__try{
-		if(pHook)
+    if(gs_pWinHttpHook)
 		{
-			ret = pHook->WinHttpOpen(lpszAgent, dwAccessType, lpszProxy, lpszProxyBypass, dwFlags);
+      ret = gs_pWinHttpHook->WinHttpOpen(lpszAgent, dwAccessType, lpszProxy, lpszProxyBypass, dwFlags);
 		}
 		else
 		{
-			WriteAGLog("WinHttpOpen_Hook pHook==NULL");
+			WriteAGLog("WinHttpOpen_Hook gs_pWinHttpHook==NULL");
 		}
 	}__except(1){
 		WriteAGLog("WinHttpOpen_Hook Failed");
@@ -127,9 +127,9 @@ HINTERNET __stdcall WinHttpOpenA_Hook(LPCSTR lpszAgent, DWORD dwAccessType, LPCS
 
 	HINTERNET ret = NULL;
 	__try{
-		if(pHook)
+    if(gs_pWinHttpHook)
 		{
-			ret = pHook->WinHttpOpenA(lpszAgent, dwAccessType, lpszProxy, lpszProxyBypass, dwFlags);
+      ret = gs_pWinHttpHook->WinHttpOpenA(lpszAgent, dwAccessType, lpszProxy, lpszProxyBypass, dwFlags);
 		}
 	}__except(1){}
 	return ret;
@@ -139,10 +139,10 @@ HINTERNET __stdcall WinHttpConnectW_Hook(HINTERNET hInternet, LPCWSTR lpszServer
 {
 	HINTERNET ret = NULL;
 	__try{
-		if (pHook)
+    if (gs_pWinHttpHook)
 		{
 			//hInternet = WinHttpOpenW(L"agsafe", NULL, NULL, 0);
-			ret = pHook->WinHttpConnectW(hInternet, lpszServerName, nServerPort, dwReserved);
+      ret = gs_pWinHttpHook->WinHttpConnectW(hInternet, lpszServerName, nServerPort, dwReserved);
 		}
 	}__except(1){}
 	return ret;
@@ -153,7 +153,7 @@ HINTERNET __stdcall WinHttpConnect_Hook(HINTERNET hInternet, LPCWSTR lpszServerN
 	WriteAGLog("WinHttpConnect_Hook Begin");
 	HINTERNET ret = NULL;
 	__try{
-		if (pHook)
+    if (gs_pWinHttpHook)
 		{
 			//hInternet = WinHttpOpen(L"agsafe", 0, NULL, NULL, 0);
 			USES_CONVERSION;
@@ -161,10 +161,10 @@ HINTERNET __stdcall WinHttpConnect_Hook(HINTERNET hInternet, LPCWSTR lpszServerN
 			char buf[10];
 			itoa(nServerPort, buf, 10);
 			WriteAGLog(buf);
-			ret = pHook->WinHttpConnect(hInternet, lpszServerName, nServerPort, dwReserved);
+      ret = gs_pWinHttpHook->WinHttpConnect(hInternet, lpszServerName, nServerPort, dwReserved);
 		}
 		else
-			WriteAGLog("WinHttpConnect_Hook pHook==NULL");
+			WriteAGLog("WinHttpConnect_Hook gs_pWinHttpHook==NULL");
 	}__except(1){
 		WriteAGLog("WinHttpConnect_Hook Failed");
 	}
@@ -176,10 +176,10 @@ HINTERNET __stdcall WinHttpConnectA_Hook(HINTERNET hInternet, LPCSTR lpszServerN
 {
 	HINTERNET ret = NULL;
 	__try{
-		if (pHook)
+    if (gs_pWinHttpHook)
 		{
 			//hInternet = WinHttpOpenA("agsafe", NULL, NULL, 0);
-			ret = pHook->WinHttpConnectA(hInternet, lpszServerName, nServerPort, dwReserved);
+      ret = gs_pWinHttpHook->WinHttpConnectA(hInternet, lpszServerName, nServerPort, dwReserved);
 		}
 	}__except(1){}
 	return ret;
@@ -190,11 +190,11 @@ HINTERNET __stdcall WinHttpOpenRequest_Hook(HINTERNET hInternet, LPCWSTR lpszVer
 	WriteAGLog("WinHttpOpenRequest_Hook Begin");
 	HINTERNET ret = NULL;
 	__try{
-		if (pHook)
+		if (gs_pWinHttpHook)
 		{
 			USES_CONVERSION;
 			WriteAGLog(W2CA(lpszObjectName));
-			ret = pHook->WinHttpOpenRequest(hInternet, lpszVerb, lpszObjectName, lpszVersion, lpszReferrer, plpszAcceptTypes, dwFlags);
+			ret = gs_pWinHttpHook->WinHttpOpenRequest(hInternet, lpszVerb, lpszObjectName, lpszVersion, lpszReferrer, plpszAcceptTypes, dwFlags);
 		}
 	}__except(1){}
 	WriteAGLog("WinHttpOpenRequest_Hook Begin");
@@ -206,11 +206,11 @@ BOOL __stdcall WinHttpGetProxyForUrl_Hook(HINTERNET hInternet, LPCWSTR lpszUrl, 
 	WriteAGLog("WinHttpGetProxyForUrl_Hook Begin");
 	BOOL ret = FALSE;
 	__try{
-		if (pHook)
+		if (gs_pWinHttpHook)
 		{
 			USES_CONVERSION;
 			WriteAGLog(W2CA(lpszUrl));
-			ret = pHook->WinHttpGetProxyForUrl(hInternet, lpszUrl, pAutoProxyOptions, pProxyInfo);
+			ret = gs_pWinHttpHook->WinHttpGetProxyForUrl(hInternet, lpszUrl, pAutoProxyOptions, pProxyInfo);
 		}
 	}__except(1){}
 	WriteAGLog("WinHttpGetProxyForUrl_Hook End");
@@ -247,9 +247,9 @@ _WinHttpOpen(NULL),_WinHttpConnect(NULL),_WinHttpOpenRequest(NULL),_WinHttpGetPr
 
 CWinHttpHook::~CWinHttpHook()
 {
-	if (pHook == this)
+  if (gs_pWinHttpHook == this)
 	{
-		pHook = NULL;
+    gs_pWinHttpHook = NULL;
 	}
 
 	DeleteCriticalSection(&cs);

