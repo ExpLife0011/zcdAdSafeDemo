@@ -233,6 +233,10 @@
 				RelativePath=".\WinInetHook.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\WsHook.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Í·ÎÄ¼þ"
@@ -261,6 +265,10 @@
 			</File>
 			<File
 				RelativePath=".\WinInetHook.h"
+				>
+			</File>
+			<File
+				RelativePath=".\WsHook.h"
 				>
 			</File>
 		</Filter>

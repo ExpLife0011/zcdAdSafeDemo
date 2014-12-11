@@ -62,7 +62,6 @@ void WinInetRemoveHooks(void)
 
 HINTERNET __stdcall InternetOpenW_Hook(LPCWSTR lpszAgent, DWORD dwAccessType, LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags)
 {
-	//::MessageBox(0, _T("InternetOpenW_Hook"), _T("InternetOpenW_Hook"), MB_OK);
 	WriteAGLog("InternetOpenW_Hook Begin");
 	lpszProxy = _T("http://127.0.0.1:8888");
 	dwAccessType = INTERNET_OPEN_TYPE_PROXY;
@@ -86,7 +85,6 @@ HINTERNET __stdcall InternetOpenW_Hook(LPCWSTR lpszAgent, DWORD dwAccessType, LP
 
 HINTERNET __stdcall InternetOpenA_Hook(LPCSTR lpszAgent, DWORD dwAccessType, LPCSTR lpszProxy, LPCSTR lpszProxyBypass, DWORD dwFlags)
 {
-	//::MessageBox(0, _T("InternetOpenA_Hook"), _T("InternetOpenA_Hook"), MB_OK);
 	//
 	WriteAGLog("InternetOpenA_Hook Begin");
 	lpszProxy = "http://127.0.0.1:8888";

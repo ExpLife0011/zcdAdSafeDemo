@@ -7,6 +7,7 @@ using namespace std;
 
 void WriteAGLog(LPCSTR cstr)
 {
+	return;	// chrome下，会出现183错误：创建已存在的文件。故此函数直接返回。
 	char szFileFullPath[MAX_PATH*sizeof(char)];
 	::GetModuleFileNameA(NULL, szFileFullPath, MAX_PATH*sizeof(char));
 
@@ -24,7 +25,7 @@ void WriteAGLog(LPCSTR cstr)
 	memset(log+loglen-1, 'g', sizeof(char));
 
 	char prefix[MAX_PATH]; memset(prefix, 0, MAX_PATH);
-	strcpy(prefix, "D:\\temp\\logs\\");
+	strcpy(prefix, "e:\\temp\\logs\\");
 	char *logpath = strcat(prefix, log);
 
   char curlog[MAX_PATH] ={0};

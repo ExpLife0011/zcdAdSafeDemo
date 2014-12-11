@@ -123,6 +123,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="WsHook.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="InputMoniter.h" />
@@ -134,6 +135,7 @@
     <ClInclude Include="ncodehook\NCodeHook.h" />
     <ClInclude Include="ncodehook\NCodeHookInstantiation.h" />
     <ClInclude Include="ncodehook\NCodeHookItem.h" />
+    <ClInclude Include="WsHook.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

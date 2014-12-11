@@ -45,6 +45,9 @@
     <ClCompile Include="ncodehook\NCodeHookItem.cpp">
       <Filter>3rd Party\NCodeHook</Filter>
     </ClCompile>
+    <ClCompile Include="WsHook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="InputMoniter.h">
@@ -73,6 +76,9 @@
     </ClInclude>
     <ClInclude Include="ncodehook\NCodeHookItem.h">
       <Filter>3rd Party\NCodeHook</Filter>
+    </ClInclude>
+    <ClInclude Include="WsHook.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

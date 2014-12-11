@@ -2,6 +2,9 @@
 #include "WinHttpHook.h"
 #include "util.h"
 
+//#include <atlbase.h>
+//#include <atlwin.h>
+#include <atlconv.h>
 #include <winhttp.h>
 #include "ncodehook/NCodeHookInstantiation.h"
 
@@ -13,6 +16,8 @@ typedef HINTERNET(__stdcall * LPWINHTTPCONNECTA)(HINTERNET hSession, LPCSTR lpsz
 typedef HINTERNET(__stdcall * LPWINHTTPOPEN)(LPCWSTR lpszAgent, DWORD dwAccessType, LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags);
 typedef HINTERNET(__stdcall * LPWINHTTPCONNECT)(HINTERNET hSession, LPCWSTR lpszServerName, INTERNET_PORT nServerPort, DWORD dwReserved);
 
+typedef HINTERNET(__stdcall * LPWINHTTPOPENREQUEST)(HINTERNET hInternet, LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion, LPCWSTR lpszReferrer, LPCWSTR FAR * plpszAcceptTypes, DWORD dwFlags);
+typedef BOOL(__stdcall * LPWINHTTPGETPROXYFORURL)(HINTERNET hInternet, LPCWSTR lpszUrl, WINHTTP_AUTOPROXY_OPTIONS *pAutoProxyOptions, OUT WINHTTP_PROXY_INFO * pProxyInfo);
 
 class CWinHttpHook
 {
@@ -28,6 +33,9 @@ public:
 
 	HINTERNET WinHttpOpen(LPCWSTR lpszAgent, DWORD dwAccessType, LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags);
 	HINTERNET WinHttpConnect(HINTERNET hSession, LPCWSTR lpszServerName, INTERNET_PORT nServerPort, DWORD dwReserved);
+  
+HINTERNET WinHttpOpenRequest(HINTERNET hInternet, LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion, LPCWSTR lpszReferrer, LPCWSTR FAR * plpszAcceptTypes, DWORD dwFlags);
+BOOL WinHttpGetProxyForUrl(HINTERNET hInternet, LPCWSTR lpszUrl, WINHTTP_AUTOPROXY_OPTIONS *pAutoProxyOptions, OUT WINHTTP_PROXY_INFO * pProxyInfo);
 
 private:
 	bool				hookOpenA;
@@ -42,6 +50,9 @@ private:
 
 	LPWINHTTPOPEN		_WinHttpOpen;
 	LPWINHTTPCONNECT	_WinHttpConnect;
+  
+	LPWINHTTPOPENREQUEST		_WinHttpOpenRequest;
+	LPWINHTTPGETPROXYFORURL	_WinHttpGetProxyForUrl;
 };
 
 
@@ -144,9 +155,12 @@ HINTERNET __stdcall WinHttpConnect_Hook(HINTERNET hInternet, LPCWSTR lpszServerN
 	__try{
 		if (pHook)
 		{
-			hInternet = WinHttpOpen(L"agsafe", 0, NULL, NULL, 0);
-			//::WideCharToMultiByte(CP_ACP, 0, lpszServerName, )
-			//WriteAGLog()
+			//hInternet = WinHttpOpen(L"agsafe", 0, NULL, NULL, 0);
+			USES_CONVERSION;
+			WriteAGLog(W2CA(lpszServerName));
+			char buf[10];
+			itoa(nServerPort, buf, 10);
+			WriteAGLog(buf);
 			ret = pHook->WinHttpConnect(hInternet, lpszServerName, nServerPort, dwReserved);
 		}
 		else
@@ -171,7 +185,40 @@ HINTERNET __stdcall WinHttpConnectA_Hook(HINTERNET hInternet, LPCSTR lpszServerN
 	return ret;
 }
 
-CWinHttpHook::CWinHttpHook()
+HINTERNET __stdcall WinHttpOpenRequest_Hook(HINTERNET hInternet, LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion, LPCWSTR lpszReferrer, LPCWSTR FAR * plpszAcceptTypes, DWORD dwFlags)
+{
+	WriteAGLog("WinHttpOpenRequest_Hook Begin");
+	HINTERNET ret = NULL;
+	__try{
+		if (pHook)
+		{
+			USES_CONVERSION;
+			WriteAGLog(W2CA(lpszObjectName));
+			ret = pHook->WinHttpOpenRequest(hInternet, lpszVerb, lpszObjectName, lpszVersion, lpszReferrer, plpszAcceptTypes, dwFlags);
+		}
+	}__except(1){}
+	WriteAGLog("WinHttpOpenRequest_Hook Begin");
+	return ret;
+}
+
+BOOL __stdcall WinHttpGetProxyForUrl_Hook(HINTERNET hInternet, LPCWSTR lpszUrl, WINHTTP_AUTOPROXY_OPTIONS *pAutoProxyOptions, OUT WINHTTP_PROXY_INFO * pProxyInfo)
+{
+	WriteAGLog("WinHttpGetProxyForUrl_Hook Begin");
+	BOOL ret = FALSE;
+	__try{
+		if (pHook)
+		{
+			USES_CONVERSION;
+			WriteAGLog(W2CA(lpszUrl));
+			ret = pHook->WinHttpGetProxyForUrl(hInternet, lpszUrl, pAutoProxyOptions, pProxyInfo);
+		}
+	}__except(1){}
+	WriteAGLog("WinHttpGetProxyForUrl_Hook End");
+	return ret;
+}
+
+CWinHttpHook::CWinHttpHook():
+_WinHttpOpen(NULL),_WinHttpConnect(NULL),_WinHttpOpenRequest(NULL),_WinHttpGetProxyForUrl(NULL)
 {
 	WriteAGLog("CWinHttpHook");
 	InitializeCriticalSection(&cs);
@@ -190,6 +237,12 @@ CWinHttpHook::CWinHttpHook()
 
 	_WinHttpOpen = hook.createHookByName("winhttp.dll", "WinHttpOpen", WinHttpOpen_Hook);
 	_WinHttpConnect = hook.createHookByName("winhttp.dll", "WinHttpConnect", WinHttpConnect_Hook);
+	_WinHttpOpenRequest = hook.createHookByName("winhttp.dll", "WinHttpOpenRequest", WinHttpOpenRequest_Hook);
+	_WinHttpGetProxyForUrl = hook.createHookByName("winhttp.dll", "WinHttpGetProxyForUrl", WinHttpGetProxyForUrl_Hook);
+	if ((_WinHttpOpen==NULL) || (_WinHttpConnect == NULL) || (_WinHttpOpenRequest==NULL) || (_WinHttpGetProxyForUrl==NULL))
+	{
+		WriteAGLog("_WinHttpOpen==NULL or _WinHttpConnect==NULL or _WinHttpOpenRequest==NULL or _WinHttpGetProxyForUrl==NULL");
+	}
 }
 
 CWinHttpHook::~CWinHttpHook()
@@ -266,5 +319,25 @@ HINTERNET CWinHttpHook::WinHttpConnectA(HINTERNET hInternet, LPCSTR lpszServerNa
 	if(_WinHttpConnectA)
 		ret = _WinHttpConnectA(hInternet, lpszServerName, nServerPort, dwReserved);
 
+	return ret;
+}
+
+HINTERNET CWinHttpHook::WinHttpOpenRequest(HINTERNET hInternet, LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion, LPCWSTR lpszReferrer, LPCWSTR FAR * plpszAcceptTypes, DWORD dwFlags)
+{
+	HINTERNET ret = NULL;
+
+	if (_WinHttpOpenRequest)
+		ret = _WinHttpOpenRequest(hInternet, lpszVerb, lpszObjectName, lpszVersion, lpszReferrer, plpszAcceptTypes, dwFlags);
+	
+	return ret;
+}
+
+BOOL CWinHttpHook::WinHttpGetProxyForUrl(HINTERNET hInternet, LPCWSTR lpszUrl, WINHTTP_AUTOPROXY_OPTIONS *pAutoProxyOptions, OUT WINHTTP_PROXY_INFO * pProxyInfo)
+{
+	BOOL ret = FALSE;
+
+	if(_WinHttpGetProxyForUrl)
+		ret = _WinHttpGetProxyForUrl(hInternet, lpszUrl, pAutoProxyOptions, pProxyInfo);
+	
 	return ret;
 }
