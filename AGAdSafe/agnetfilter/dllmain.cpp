@@ -25,8 +25,8 @@
 
 #include "util.h"
 
-HINSTANCE g_hHinstance = NULL;
-HHOOK g_hHook;
+HINSTANCE g_hInstance = NULL;
+HHOOK g_hKbHook;
 BOOL g_bWinHttpApiHook = FALSE;
 BOOL g_bWinInetApiHook = FALSE;
 
@@ -71,15 +71,15 @@ BOOL g_bWinInetApiHook = FALSE;
 // 
 // }
 /////////////////////
-LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK KbHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	if (nCode < 0)
 	{
-		return CallNextHookEx(g_hHook, nCode, wParam, lParam);
+		return CallNextHookEx(g_hKbHook, nCode, wParam, lParam);
 	}
 	if (nCode != HC_ACTION)
 	{
-		return CallNextHookEx(g_hHook, nCode, wParam, lParam);
+		return CallNextHookEx(g_hKbHook, nCode, wParam, lParam);
 	}
 
 // 	if (!::FindWindow(0, _T("KeyBoard Locked")))
@@ -113,12 +113,12 @@ LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam)
 	}
 #endif
 	
-	return CallNextHookEx(g_hHook, nCode, wParam, lParam);
+	return CallNextHookEx(g_hKbHook, nCode, wParam, lParam);
 }
 BOOL EnableKeyboardCapture()
 {
 	WriteAGLog("EnableKeyboardCapture");
-	if (!(g_hHook=SetWindowsHookEx(WH_KEYBOARD, (HOOKPROC)HookProc, g_hHinstance, 0)))
+	if (!(g_hKbHook=SetWindowsHookEx(WH_KEYBOARD, (HOOKPROC)KbHookProc, g_hInstance, 0)))
 	{
 		WriteAGLog("SetWindowsHookEx FALSE");
 		return FALSE;
@@ -129,6 +129,7 @@ BOOL EnableKeyboardCapture()
 // 导出函数：解除键盘锁定
 BOOL DisableKeyboardCapture()
 {
+	WriteAGLog("DisableKeyboardCapture");
 #ifdef _USE_WINHTTP_
 	WinHttpRemoveHooks();
 #elif defined(_USE_WININET_)
@@ -137,7 +138,8 @@ BOOL DisableKeyboardCapture()
 	WinHttpRemoveHooks();
 	WinInetRemoveHooks();
 #endif
-	return UnhookWindowsHookEx(g_hHook);
+	WriteAGLog("UnhookWindowsHookEx TRUE");
+	return UnhookWindowsHookEx(g_hKbHook);
 }
 // end
 
@@ -156,7 +158,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		//DisableKeyboardCapture();
 		break;
 	}
-	g_hHinstance = (HINSTANCE)hModule;
+	g_hInstance = (HINSTANCE)hModule;
 	return TRUE;
 }
 

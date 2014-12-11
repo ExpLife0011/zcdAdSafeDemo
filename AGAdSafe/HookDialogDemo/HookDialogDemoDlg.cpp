@@ -12,7 +12,7 @@
 
 typedef BOOL (CALLBACK *LOADHOOK)();
 typedef BOOL (CALLBACK *UNLOADHOOK)();
-HINSTANCE hDLL=NULL;
+HINSTANCE g_hFilterInst=NULL;
 LOADHOOK loadhook;
 UNLOADHOOK unloadhook;
 
@@ -163,11 +163,15 @@ HCURSOR CHookDialogDemoDlg::OnQueryDragIcon()
 
 BOOL CHookDialogDemoDlg::KBLock(BOOL sign)
 {
-	hDLL = ::LoadLibrary(_T("agnetfilter.dll"));//hDLL=::LoadLibrary(_T("HookDll.dll"));       //º”‘ÿDLL
-	if (hDLL!=NULL)
+  if( g_hFilterInst ==NULL)
+  {
+	g_hFilterInst = ::LoadLibrary(_T("agnetfilter.dll"));//g_hFilterInst=::LoadLibrary(_T("HookDll.dll"));       //º”‘ÿDLL
+  }
+  
+  if (g_hFilterInst!=NULL)
 	{
-		loadhook=(LOADHOOK)::GetProcAddress (hDLL,"EnableKeyboardCapture");
-		unloadhook=(UNLOADHOOK)::GetProcAddress (hDLL,"DisableKeyboardCapture");
+		loadhook=(LOADHOOK)::GetProcAddress (g_hFilterInst,"EnableKeyboardCapture");
+		unloadhook=(UNLOADHOOK)::GetProcAddress (g_hFilterInst,"DisableKeyboardCapture");
 
 		if(loadhook==NULL||unloadhook==NULL)
 		{
@@ -179,8 +183,9 @@ BOOL CHookDialogDemoDlg::KBLock(BOOL sign)
 		else
 		{
 			unloadhook();
-			::FreeLibrary(hDLL);
+			::FreeLibrary(g_hFilterInst);g_hFilterInst = NULL;
 		}
+			//::FreeLibrary(g_hFilterInst);g_hFilterInst = NULL;
 		return 1;
 	}
 	::MessageBox(0,_T("∂ØÃ¨ø‚º”‘ÿ ß∞‹£°£°£°"), _T("Somthing Wrong"),MB_OK);

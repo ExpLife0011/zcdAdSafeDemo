@@ -15,8 +15,8 @@ void WriteAGLog(LPCSTR cstr)
 	char *cfilename = strrchr(szFileFullPath, '\\');
 	//char szFileName[128]='\0';
 	//strcpy(szFileName, szFileFullPath+begin);
-	char log[128];
-	memset(log, 0, 128*sizeof(char));
+	char log[MAX_PATH];
+	memset(log, 0, MAX_PATH*sizeof(char));
 	strcpy(log, cfilename+1);
 	int loglen = strlen(log);
 	memset(log+loglen-3, 'l', sizeof(char));
@@ -24,9 +24,13 @@ void WriteAGLog(LPCSTR cstr)
 	memset(log+loglen-1, 'g', sizeof(char));
 
 	char prefix[MAX_PATH]; memset(prefix, 0, MAX_PATH);
-	strcpy(prefix, "e:\\temp\\logs\\");
+	strcpy(prefix, "D:\\temp\\logs\\");
 	char *logpath = strcat(prefix, log);
 
+  char curlog[MAX_PATH] ={0};
+	strcpy(curlog, szFileFullPath);
+  strcat(curlog,".log");
+  logpath = curlog;
 	//
 	struct tm *local;
 	time_t t;
