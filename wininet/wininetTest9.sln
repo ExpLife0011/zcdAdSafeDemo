@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wininetTest", "wininetTest\wininetTest.vcproj", "{63020D51-3F79-42F3-B107-12CAB81E21FB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wininetMfcDemo", "wininetMfcDemo\wininetMfcDemo.vcproj", "{F627A53C-3B1E-4BBF-9802-F4FB855C3634}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{63020D51-3F79-42F3-B107-12CAB81E21FB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{63020D51-3F79-42F3-B107-12CAB81E21FB}.Debug|Win32.Build.0 = Debug|Win32
+		{63020D51-3F79-42F3-B107-12CAB81E21FB}.Release|Win32.ActiveCfg = Release|Win32
+		{63020D51-3F79-42F3-B107-12CAB81E21FB}.Release|Win32.Build.0 = Release|Win32
+		{F627A53C-3B1E-4BBF-9802-F4FB855C3634}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F627A53C-3B1E-4BBF-9802-F4FB855C3634}.Debug|Win32.Build.0 = Debug|Win32
+		{F627A53C-3B1E-4BBF-9802-F4FB855C3634}.Release|Win32.ActiveCfg = Release|Win32
+		{F627A53C-3B1E-4BBF-9802-F4FB855C3634}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
