@@ -29,10 +29,10 @@
 #include "util.h"
 
 HINSTANCE g_hInstance = NULL;
-HHOOK g_hKbHook;
+HHOOK g_hKbHook = NULL;
 BOOL g_bWinHttpApiHook = FALSE;
 BOOL g_bWinInetApiHook = FALSE;
-BOOL g_bWinSockApiHook = FALSE;
+BOOL g_bWinsockApiHook = FALSE;
 
 ///////////////////
 // log
@@ -105,10 +105,10 @@ LRESULT CALLBACK KbHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 		g_bWinInetApiHook = WinInetInstallHooks();
 	}
 #elif defined(_USE_WINSOCK_)
-	if (g_bWinSockApiHook==FALSE)
+	if (g_bWinsockApiHook==FALSE)
 	{
 		WriteAGLog("WinsockInstallHooks");
-		g_bWinSockApiHook = WinsockInstallHooks();
+		g_bWinsockApiHook = WinsockInstallHooks();
 	}
 #else
 	if (g_bWinHttpApiHook == FALSE)
@@ -128,30 +128,62 @@ LRESULT CALLBACK KbHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 BOOL EnableKeyboardCapture()
 {
 	WriteAGLog("EnableKeyboardCapture");
-	if (!(g_hKbHook=SetWindowsHookEx(WH_KEYBOARD, (HOOKPROC)KbHookProc, g_hInstance, 0)))
+  if(g_hKbHook == NULL)
+  {
+  g_hKbHook=SetWindowsHookExW(WH_KEYBOARD, (HOOKPROC)KbHookProc, g_hInstance, 0);
+	if (g_hKbHook == NULL)
 	{
 		WriteAGLog("SetWindowsHookEx FALSE");
 		return FALSE;
 	}
 	WriteAGLog("SetWindowsHookEx TRUE");
+  }
 	return TRUE;
 }
 // 导出函数：解除键盘锁定
 BOOL DisableKeyboardCapture()
 {
 	WriteAGLog("DisableKeyboardCapture");
+  BOOL bOK = UnhookWindowsHookEx(g_hKbHook);
 #ifdef _USE_WINHTTP_
 	WinHttpRemoveHooks();
 #elif defined(_USE_WININET_)
 	WinInetRemoveHooks();
 #elif defined(_USE_WINSOCK_)
 	WinsockRemoveHooks();
+  //g_bWinsockApiHook = FALSE;
 #else
 	WinHttpRemoveHooks();
 	WinInetRemoveHooks();
 #endif
+  g_hKbHook = NULL;
 	WriteAGLog("UnhookWindowsHookEx TRUE");
-	return UnhookWindowsHookEx(g_hKbHook);
+	return bOK;
+}
+
+BOOL DisableKeyboardCaptureHook()
+{
+	WriteAGLog("DisableKeyboardCapture");
+  BOOL bOK = UnhookWindowsHookEx(g_hKbHook);
+  g_hKbHook = NULL;
+	WriteAGLog("UnhookWindowsHookEx TRUE");
+	return bOK;
+}
+BOOL DisableKeyboardCaptureRemove()
+{
+  BOOL bOK = TRUE;
+#ifdef _USE_WINHTTP_
+	WinHttpRemoveHooks();
+#elif defined(_USE_WININET_)
+	WinInetRemoveHooks();
+#elif defined(_USE_WINSOCK_)
+	WinsockRemoveHooks();
+  //g_bWinsockApiHook = FALSE;
+#else
+	WinHttpRemoveHooks();
+	WinInetRemoveHooks();
+#endif
+	return bOK;
 }
 // end
 
@@ -160,11 +192,18 @@ BOOL APIENTRY DllMain( HMODULE hModule,
                        LPVOID lpReserved
 					 )
 {
+  TCHAR szPath[_MAX_PATH+1]={0};
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
 		//EnableKeyboardCapture();
-	case DLL_THREAD_ATTACH:
+    DisableThreadLibraryCalls(hModule); 
+    ::GetModuleFileName(hModule,szPath,_MAX_PATH);
+    ::LoadLibrary(szPath);
+    //::FreeLibraryAndExitThread(hModule,0);
+    // Safely remove hook
+    //::UnhookWindowsHookEx( g_hKbHook );
+  case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
 	case DLL_PROCESS_DETACH:
 		//DisableKeyboardCapture();

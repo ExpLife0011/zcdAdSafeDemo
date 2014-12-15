@@ -121,6 +121,7 @@ CWsHook::~CWsHook()
 	{
     gs_pWinsockHook = NULL;
     //hook.removeHook(_connect);
+    _connect = NULL;
 	}
 
 	DeleteCriticalSection(&cs);

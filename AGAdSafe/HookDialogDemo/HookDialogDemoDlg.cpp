@@ -13,8 +13,11 @@
 typedef BOOL (CALLBACK *LOADHOOK)();
 typedef BOOL (CALLBACK *UNLOADHOOK)();
 HINSTANCE g_hFilterInst=NULL;
-LOADHOOK loadhook;
-UNLOADHOOK unloadhook;
+LOADHOOK g_loadhook;
+UNLOADHOOK g_unloadhook;
+UNLOADHOOK g_unloadhookHook;
+UNLOADHOOK g_unloadhookRemove;
+
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -161,30 +164,43 @@ HCURSOR CHookDialogDemoDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-
+#include "KGRemote.cpp"
 BOOL CHookDialogDemoDlg::KBLock(BOOL sign)
 {
+  TCHAR szPath[_MAX_PATH+1]={0};
+  ::GetModuleFileName(g_hFilterInst,szPath,_MAX_PATH);
+
   if( g_hFilterInst ==NULL)
   {
 	g_hFilterInst = ::LoadLibrary(_T("agnetfilter.dll"));//g_hFilterInst=::LoadLibrary(_T("HookDll.dll"));       //加载DLL
-  }
-  
-  if (g_hFilterInst!=NULL)
-	{
-		loadhook=(LOADHOOK)::GetProcAddress (g_hFilterInst,"EnableKeyboardCapture");
-		unloadhook=(UNLOADHOOK)::GetProcAddress (g_hFilterInst,"DisableKeyboardCapture");
-
-		if(loadhook==NULL||unloadhook==NULL)
+		g_loadhook=(LOADHOOK)::GetProcAddress (g_hFilterInst,"EnableKeyboardCapture");
+		g_unloadhook=(UNLOADHOOK)::GetProcAddress (g_hFilterInst,"DisableKeyboardCapture");
+		g_unloadhookHook=(UNLOADHOOK)::GetProcAddress (g_hFilterInst,"DisableKeyboardCaptureHook");
+		g_unloadhookRemove=(UNLOADHOOK)::GetProcAddress (g_hFilterInst,"DisableKeyboardCaptureRemove");
+    ::GetModuleFileName(g_hFilterInst,szPath,_MAX_PATH);
+		if(g_loadhook==NULL||g_unloadhook==NULL)
 		{
 			::MessageBox(0,_T("对不起，本功能不能使用！！！"), _T("Somthing Wrong"),MB_OK);
+			::FreeLibrary(g_hFilterInst);g_hFilterInst = NULL;
 			return 0;
 		}
+  }
+  BOOL bOK = FALSE;
+  if (g_hFilterInst!=NULL)
+	{
+
 		if(sign)
-			loadhook();
+    {
+			bOK = g_loadhook();
+    }
 		else
 		{
-			unloadhook();
-			::FreeLibrary(g_hFilterInst);g_hFilterInst = NULL;
+      g_unloadhookHook();
+      //g_unloadhookRemove();
+      ::KGEnumProcEjectLibrary(szPath);
+			//bOK =g_unloadhook();
+
+			//::FreeLibrary(g_hFilterInst);g_hFilterInst = NULL;
 		}
 			//::FreeLibrary(g_hFilterInst);g_hFilterInst = NULL;
 		return 1;
@@ -268,3 +284,4 @@ void CHookDialogDemoDlg::OnBnClickedBtnOpenHttpByWinsock()
 	printf("%s/n", rcvBuf);
 
 }
+
