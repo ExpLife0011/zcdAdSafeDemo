@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include "WsHook.h"
+#include "WinsockHook.h"
 #include "util.h"
 
 #define TRACE_WINSOCK 1
@@ -23,11 +23,11 @@ typedef BOOL(PASCAL FAR * LPFN_CONNECTEX_WPT) (SOCKET s,
     const struct sockaddr FAR *name, int namelen, PVOID lpSendBuffer,
     DWORD dwSendDataLength, LPDWORD lpdwBytesSent, LPOVERLAPPED lpOverlapped);
 
-class CWsHook
+class CWinsockHook
 {
 public:
-	CWsHook(void);
-	virtual ~CWsHook(void);
+	CWinsockHook(void);
+	virtual ~CWinsockHook(void);
   void Init();
 
 	int		connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen);
@@ -94,13 +94,13 @@ private:
 
 };
 
-static CWsHook * gs_pWinsockHook = NULL;
+static CWinsockHook * gs_pWinsockHook = NULL;
 
 
 BOOL WinsockInstallHooks()
 {
   if(!gs_pWinsockHook)
-    gs_pWinsockHook = new CWsHook();
+    gs_pWinsockHook = new CWinsockHook();
   return gs_pWinsockHook!=NULL;
 }
 
@@ -123,11 +123,11 @@ void WinsockRemoveHooks()
 ******************************************************************************/
 
 
-BOOL PASCAL ConnectEx_Hook(SOCKET s, const struct sockaddr FAR *name,
+BOOL PASCAL ConnectEx_AGHook(SOCKET s, const struct sockaddr FAR *name,
     int namelen, PVOID lpSendBuffer, DWORD dwSendDataLength,
     LPDWORD lpdwBytesSent, LPOVERLAPPED lpOverlapped) 
 {
-	WriteAGLog("connectEx_Hook Begin");
+	WriteAGLog("connectEx_AGHook Begin");
   BOOL ret = FALSE;
 	__try{
 		if(gs_pWinsockHook)
@@ -155,14 +155,14 @@ BOOL PASCAL ConnectEx_Hook(SOCKET s, const struct sockaddr FAR *name,
 			}
     }
 	}__except(1){
-		WriteAGLog("connectEx_Hook Failed");
+		WriteAGLog("connectEx_AGHook Failed");
 	}
-	WriteAGLog("connectEx_Hook End");
+	WriteAGLog("connectEx_AGHook End");
 	return ret;;
 }
-int WSAAPI connect_Hook(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
+int WSAAPI connect_AGHook(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
 {
-	WriteAGLog("connect_Hook Begin");
+	WriteAGLog("connect_AGHook Begin");
 	int ret = SOCKET_ERROR;
 	__try{
 		if(gs_pWinsockHook)
@@ -217,14 +217,14 @@ int WSAAPI connect_Hook(IN SOCKET s, const struct sockaddr FAR * name, IN int na
 			}
 		}
 	}__except(1){
-		WriteAGLog("connect_Hook Failed");
+		WriteAGLog("connect_AGHook Failed");
 	}
-	WriteAGLog("connect_Hook End");
+	WriteAGLog("connect_AGHook End");
 	return ret;
 }
 
 
-int WSAAPI WSARecv_Hook(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount, 
+int WSAAPI WSARecv_AGHook(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount, 
                         LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags, 
                         LPWSAOVERLAPPED lpOverlapped, 
                       LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
@@ -235,7 +235,7 @@ int WSAAPI WSARecv_Hook(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
   return ret;
 }
 
-int WSAAPI WSASend_Hook(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+int WSAAPI WSASend_AGHook(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
               LPDWORD lpNumberOfBytesSent, DWORD dwFlags, 
               LPWSAOVERLAPPED lpOverlapped,
               LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
@@ -246,7 +246,7 @@ int WSAAPI WSASend_Hook(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
   return ret;
 }
 
-PTP_IO WINAPI CreateThreadpoolIo_Hook(HANDLE fl,
+PTP_IO WINAPI CreateThreadpoolIo_AGHook(HANDLE fl,
     PTP_WIN32_IO_CALLBACK_WPT pfnio, PVOID pv, PTP_CALLBACK_ENVIRON pcbe) {
   PTP_IO ret = NULL;
   if (gs_pWinsockHook)
@@ -254,7 +254,7 @@ PTP_IO WINAPI CreateThreadpoolIo_Hook(HANDLE fl,
   return ret;
 }
 
-PTP_IO WINAPI CreateThreadpoolIo_base_Hook(HANDLE fl,
+PTP_IO WINAPI CreateThreadpoolIo_base_AGHook(HANDLE fl,
     PTP_WIN32_IO_CALLBACK_WPT pfnio, PVOID pv, PTP_CALLBACK_ENVIRON pcbe) {
   PTP_IO ret = NULL;
   if (gs_pWinsockHook)
@@ -262,27 +262,27 @@ PTP_IO WINAPI CreateThreadpoolIo_base_Hook(HANDLE fl,
   return ret;
 }
 
-void WINAPI CloseThreadpoolIo_Hook(PTP_IO pio) {
+void WINAPI CloseThreadpoolIo_AGHook(PTP_IO pio) {
   if (gs_pWinsockHook)
     gs_pWinsockHook->CloseThreadpoolIo(pio, false);
 }
 
-void WINAPI CloseThreadpoolIo_base_Hook(PTP_IO pio) {
+void WINAPI CloseThreadpoolIo_base_AGHook(PTP_IO pio) {
   if (gs_pWinsockHook)
     gs_pWinsockHook->CloseThreadpoolIo(pio, true);
 }
 
-void WINAPI StartThreadpoolIo_Hook(PTP_IO pio) {
+void WINAPI StartThreadpoolIo_AGHook(PTP_IO pio) {
   if (gs_pWinsockHook)
     gs_pWinsockHook->StartThreadpoolIo(pio, false);
 }
 
-void WINAPI StartThreadpoolIo_base_Hook(PTP_IO pio) {
+void WINAPI StartThreadpoolIo_base_AGHook(PTP_IO pio) {
   if (gs_pWinsockHook)
     gs_pWinsockHook->StartThreadpoolIo(pio, true);
 }
 
-int WSAAPI WSAIoctl_Hook(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
+int WSAAPI WSAIoctl_AGHook(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
   DWORD cbInBuffer, LPVOID lpvOutBuffer, DWORD cbOutBuffer,
   LPDWORD lpcbBytesReturned, LPWSAOVERLAPPED lpOverlapped,
   LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
@@ -298,7 +298,7 @@ int WSAAPI WSAIoctl_Hook(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
 
 
 ////////////
-CWsHook::CWsHook()
+CWinsockHook::CWinsockHook()
 
 {
 	InitializeCriticalSection(&cs);
@@ -310,7 +310,7 @@ CWsHook::CWsHook()
   Init();
 }
 
-CWsHook::~CWsHook()
+CWinsockHook::~CWinsockHook()
 {
   if (gs_pWinsockHook == this)
 	{
@@ -321,34 +321,34 @@ CWsHook::~CWsHook()
 
 	DeleteCriticalSection(&cs);
 }
-void CWsHook::Init()
+void CWinsockHook::Init()
 {
   if (!gs_pWinsockHook)
     gs_pWinsockHook = this;
 
   // install the code hooks
-  _connect = hook.createHookByName("ws2_32.dll", "connect", connect_Hook);
+  _connect = hook.createHookByName("ws2_32.dll", "connect", connect_AGHook);
 
-  _WSARecv = hook.createHookByName("ws2_32.dll", "WSARecv", WSARecv_Hook);
-  _WSASend = hook.createHookByName("ws2_32.dll", "WSASend", WSASend_Hook);
+  _WSARecv = hook.createHookByName("ws2_32.dll", "WSARecv", WSARecv_AGHook);
+  _WSASend = hook.createHookByName("ws2_32.dll", "WSASend", WSASend_AGHook);
   _CreateThreadpoolIo = hook.createHookByName("kernel32.dll",
-      "CreateThreadpoolIo", CreateThreadpoolIo_Hook);
+      "CreateThreadpoolIo", CreateThreadpoolIo_AGHook);
   _CreateThreadpoolIo_base = hook.createHookByName("kernelbase.dll",
-      "CreateThreadpoolIo", CreateThreadpoolIo_base_Hook);
+      "CreateThreadpoolIo", CreateThreadpoolIo_base_AGHook);
   _CloseThreadpoolIo = hook.createHookByName("kernelbase.dll",
-      "CloseThreadpoolIo", CloseThreadpoolIo_Hook);
+      "CloseThreadpoolIo", CloseThreadpoolIo_AGHook);
   _CloseThreadpoolIo_base = hook.createHookByName("kernel32.dll",
-      "CloseThreadpoolIo", CloseThreadpoolIo_base_Hook);
+      "CloseThreadpoolIo", CloseThreadpoolIo_base_AGHook);
   _StartThreadpoolIo = hook.createHookByName("kernelbase.dll",
-      "StartThreadpoolIo", StartThreadpoolIo_Hook);
+      "StartThreadpoolIo", StartThreadpoolIo_AGHook);
   _StartThreadpoolIo_base = hook.createHookByName("kernel32.dll",
-      "StartThreadpoolIo", StartThreadpoolIo_base_Hook);
-  _WSAIoctl = hook.createHookByName("ws2_32.dll", "WSAIoctl", WSAIoctl_Hook);
+      "StartThreadpoolIo", StartThreadpoolIo_base_AGHook);
+  _WSAIoctl = hook.createHookByName("ws2_32.dll", "WSAIoctl", WSAIoctl_AGHook);
 
   // only hook the A version if the W version wasn't present (XP SP1 or below)
 }
 
-int CWsHook::connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
+int CWinsockHook::connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
 {
 	int ret = SOCKET_ERROR;
 
@@ -360,7 +360,7 @@ int CWsHook::connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namel
 	return ret;
 }
 
-BOOL CWsHook::ConnectEx(SOCKET s, const struct sockaddr FAR *name, int namelen,
+BOOL CWinsockHook::ConnectEx(SOCKET s, const struct sockaddr FAR *name, int namelen,
     PVOID lpSendBuffer, DWORD dwSendDataLength, LPDWORD lpdwBytesSent,
     LPOVERLAPPED lpOverlapped) {
 #ifdef TRACE_WINSOCK
@@ -404,7 +404,7 @@ BOOL CWsHook::ConnectEx(SOCKET s, const struct sockaddr FAR *name, int namelen,
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-int	CWsHook::WSARecv(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount, 
+int	CWinsockHook::WSARecv(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount, 
                      LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags, 
                      LPWSAOVERLAPPED lpOverlapped, 
                      LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
@@ -418,7 +418,7 @@ int	CWsHook::WSARecv(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-int CWsHook::WSASend(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+int CWinsockHook::WSASend(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
               LPDWORD lpNumberOfBytesSent, DWORD dwFlags, 
               LPWSAOVERLAPPED lpOverlapped,
               LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
@@ -437,7 +437,7 @@ int CWsHook::WSASend(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-VOID WINAPI ThreadpoolCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context,
+VOID WINAPI ThreadpoolCallbackAG(PTP_CALLBACK_INSTANCE Instance, PVOID Context,
     PVOID Overlapped, ULONG IoResult, ULONG_PTR NumberOfBytesTransferred,
     PTP_IO Io) {
   if (gs_pWinsockHook)
@@ -447,7 +447,7 @@ VOID WINAPI ThreadpoolCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context,
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-void CWsHook::ThreadpoolCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context,
+void CWinsockHook::ThreadpoolCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context,
     PVOID Overlapped, ULONG IoResult, ULONG_PTR NumberOfBytesTransferred,
     PTP_IO Io) {
   PTP_WIN32_IO_CALLBACK_WPT callback = NULL;
@@ -478,16 +478,16 @@ void CWsHook::ThreadpoolCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context,
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-PTP_IO CWsHook::CreateThreadpoolIo(HANDLE fl,
+PTP_IO CWinsockHook::CreateThreadpoolIo(HANDLE fl,
     PTP_WIN32_IO_CALLBACK_WPT pfnio, PVOID pv, PTP_CALLBACK_ENVIRON pcbe,
     bool kernelBase) {
   PTP_IO ret = NULL;
   if (kernelBase && _CreateThreadpoolIo_base)
-    ret = _CreateThreadpoolIo_base(fl, ::ThreadpoolCallback, pv, pcbe);
+    ret = _CreateThreadpoolIo_base(fl, ::ThreadpoolCallbackAG, pv, pcbe);
   else if (!kernelBase && _CreateThreadpoolIo)
-    ret = _CreateThreadpoolIo(fl, ::ThreadpoolCallback, pv, pcbe);
+    ret = _CreateThreadpoolIo(fl, ::ThreadpoolCallbackAG, pv, pcbe);
   EnterCriticalSection(&cs);
-  if (ret && pfnio != ::ThreadpoolCallback) {
+  if (ret && pfnio != ::ThreadpoolCallbackAG) {
     _threadpool_callbacks.SetAt(ret, pfnio);
     _threadpool_sockets.SetAt(ret, (SOCKET)fl);
   }
@@ -501,7 +501,7 @@ PTP_IO CWsHook::CreateThreadpoolIo(HANDLE fl,
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-void CWsHook::CloseThreadpoolIo(PTP_IO pio, bool kernelBase) {
+void CWinsockHook::CloseThreadpoolIo(PTP_IO pio, bool kernelBase) {
 #ifdef TRACE_WINSOCK
   ATLTRACE(_T("CloseThreadpoolIo (%s) - pio = 0x%p"),
            kernelBase ? _T("kernelbase") : _T("kernel32"), pio);
@@ -518,7 +518,7 @@ void CWsHook::CloseThreadpoolIo(PTP_IO pio, bool kernelBase) {
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-void CWsHook::StartThreadpoolIo(PTP_IO pio, bool kernelBase) {
+void CWinsockHook::StartThreadpoolIo(PTP_IO pio, bool kernelBase) {
 #ifdef TRACE_WINSOCK
   ATLTRACE(_T("StartThreadpoolIo (%s) - pio = 0x%p"),
            kernelBase ? _T("kernelbase") : _T("kernel32"), pio);
@@ -531,7 +531,7 @@ void CWsHook::StartThreadpoolIo(PTP_IO pio, bool kernelBase) {
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-int CWsHook::WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
+int CWinsockHook::WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
   DWORD cbInBuffer, LPVOID lpvOutBuffer, DWORD cbOutBuffer,
   LPDWORD lpcbBytesReturned, LPWSAOVERLAPPED lpOverlapped,
   LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
@@ -559,7 +559,7 @@ int CWsHook::WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
       LPFN_CONNECTEX_WPT connect_ex;
       memcpy(&connect_ex, lpvOutBuffer, sizeof(LPFN_CONNECTEX_WPT));
       _connectex_functions.SetAt(s, connect_ex);
-      LPFN_CONNECTEX_WPT connect_ex_hook = ConnectEx_Hook;
+      LPFN_CONNECTEX_WPT connect_ex_hook = ConnectEx_AGHook;
       memcpy(lpvOutBuffer, &connect_ex_hook, sizeof(LPFN_CONNECTEX_WPT));
     }
   }

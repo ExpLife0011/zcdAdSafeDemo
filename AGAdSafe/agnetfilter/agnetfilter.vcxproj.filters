@@ -45,7 +45,10 @@
     <ClCompile Include="ncodehook\NCodeHookItem.cpp">
       <Filter>3rd Party\NCodeHook</Filter>
     </ClCompile>
-    <ClCompile Include="WsHook.cpp">
+    <ClCompile Include="WinsockHook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="WptsockHook.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -77,7 +80,10 @@
     <ClInclude Include="ncodehook\NCodeHookItem.h">
       <Filter>3rd Party\NCodeHook</Filter>
     </ClInclude>
-    <ClInclude Include="WsHook.h">
+    <ClInclude Include="WinsockHook.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="WptsockHook.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

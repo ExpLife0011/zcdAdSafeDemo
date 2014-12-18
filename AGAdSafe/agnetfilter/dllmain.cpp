@@ -6,12 +6,15 @@
 //#define _USE_WINHTTP_
 //#define _USE_WININET_
 #define _USE_WINSOCK_
+//#define _USE_WPTSOCK_
 #ifdef _USE_WINHTTP_
 #include "WinHttpHook.h"
 #elif defined(_USE_WININET_)
 #include "WinInetHook.h"
 #elif defined(_USE_WINSOCK_)
-#include "WsHook.h"
+#include "WinsockHook.h"
+#elif defined(_USE_WPTSOCK_)
+#include "WptsockHook.h"
 #else
 #include "WinHttpHook.h"
 #include "WinInetHook.h"
@@ -33,6 +36,7 @@ HHOOK g_hKbHook = NULL;
 BOOL g_bWinHttpApiHook = FALSE;
 BOOL g_bWinInetApiHook = FALSE;
 BOOL g_bWinsockApiHook = FALSE;
+BOOL g_bWptsockApiHook = FALSE;
 
 ///////////////////
 // log
@@ -110,6 +114,12 @@ LRESULT CALLBACK KbHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 		WriteAGLog("WinsockInstallHooks");
 		g_bWinsockApiHook = WinsockInstallHooks();
 	}
+#elif defined(_USE_WPTSOCK_)
+	if (g_bWptsockApiHook==FALSE)
+	{
+		WriteAGLog("WptsockInstallHooks");
+		g_bWptsockApiHook = WptsockInstallHooks();
+	}
 #else
 	if (g_bWinHttpApiHook == FALSE)
 	{
@@ -152,6 +162,8 @@ BOOL DisableKeyboardCapture()
 #elif defined(_USE_WINSOCK_)
 	WinsockRemoveHooks();
   //g_bWinsockApiHook = FALSE;
+#elif defined(_USE_WPTSOCK_)
+  WptsockRemoveHooks();
 #else
 	WinHttpRemoveHooks();
 	WinInetRemoveHooks();
@@ -179,6 +191,8 @@ BOOL DisableKeyboardCaptureRemove()
 #elif defined(_USE_WINSOCK_)
 	WinsockRemoveHooks();
   //g_bWinsockApiHook = FALSE;
+#elif defined(_USE_WPTSOCK_)
+  WptsockRemoveHooks();
 #else
 	WinHttpRemoveHooks();
 	WinInetRemoveHooks();
@@ -203,6 +217,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     //::FreeLibraryAndExitThread(hModule,0);
     // Safely remove hook
     //::UnhookWindowsHookEx( g_hKbHook );
+    ::GetModuleFileName(NULL,szPath,_MAX_PATH);
+    ::OutputDebugString(szPath);
+
   case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
 	case DLL_PROCESS_DETACH:
