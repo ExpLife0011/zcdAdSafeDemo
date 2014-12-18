@@ -5,8 +5,8 @@
 //begin
 //#define _USE_WINHTTP_
 //#define _USE_WININET_
-#define _USE_WINSOCK_
-//#define _USE_WPTSOCK_
+//#define _USE_WINSOCK_
+#define _USE_WPTSOCK_
 #ifdef _USE_WINHTTP_
 #include "WinHttpHook.h"
 #elif defined(_USE_WININET_)

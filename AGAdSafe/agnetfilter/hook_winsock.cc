@@ -441,12 +441,14 @@ SOCKET CWsHook::WSASocketW(int af, int type, int protocol,
   SOCKET ret = INVALID_SOCKET;
 #ifdef ENABLE_WPTRACE
   _sockets.ResetSslFd();
+#endif
   if (_WSASocketW) {
     ret = _WSASocketW(af, type, protocol, lpProtocolInfo, g, dwFlags);
+#ifdef ENABLE_WPTRACE
     if( ret != INVALID_SOCKET && !_test_state._exit )
       _sockets.Create(ret);
-  }
 #endif
+  }
 #ifdef TRACE_WINSOCK
   ATLTRACE(_T("%d - WSASocketW, socket created"), ret);
 #endif
@@ -594,7 +596,8 @@ int	CWsHook::recv(SOCKET s, char FAR * buf, int len, int flags) {
 int	CWsHook::WSARecv(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount, 
                      LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags, 
                      LPWSAOVERLAPPED lpOverlapped, 
-                     LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
+                     LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
   int ret = SOCKET_ERROR;
   if (_WSARecv)
     ret = _WSARecv(s, lpBuffers, dwBufferCount, lpNumberOfBytesRecvd, lpFlags, 
@@ -628,7 +631,8 @@ int	CWsHook::WSARecv(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-int CWsHook::send(SOCKET s, const char FAR * buf, int len, int flags) {
+int CWsHook::send(SOCKET s, const char FAR * buf, int len, int flags)
+{
   int ret = SOCKET_ERROR;
 #ifdef TRACE_WINSOCK
   ATLTRACE(_T("%d - send %d bytes"), s, len);
@@ -647,12 +651,13 @@ int CWsHook::send(SOCKET s, const char FAR * buf, int len, int flags) {
   }
   _sockets.ResetSslFd();
 #else
-   if (_send) {
+   if (_send)
+   {
     ret = _send(s, buf, len, flags);
   }
-
 #endif
-  return ret;
+
+   return ret;
 }
 
 /*-----------------------------------------------------------------------------
@@ -660,7 +665,8 @@ int CWsHook::send(SOCKET s, const char FAR * buf, int len, int flags) {
 int CWsHook::WSASend(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
               LPDWORD lpNumberOfBytesSent, DWORD dwFlags, 
               LPWSAOVERLAPPED lpOverlapped,
-              LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
+              LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
   int ret = SOCKET_ERROR;
 #ifdef TRACE_WINSOCK
   ATLTRACE(_T("%d - WSASend %d buffers"), s, dwBufferCount);
@@ -733,19 +739,21 @@ int CWsHook::select(int nfds, fd_set FAR * readfds, fd_set FAR * writefds,
 #endif 
   if (_select)
     ret = _select(nfds, readfds, writefds, exceptfds, timeout);
-#ifdef ENABLE_WPTRACK
 
     if (ret > 0 && writefds && writefds->fd_count && !_connecting.IsEmpty()) {
     EnterCriticalSection(&cs);
     for (u_int i = 0; i < writefds->fd_count; i++) {
       SOCKET s = writefds->fd_array[i];
       if (_connecting.RemoveKey(s))
+      {
+#ifdef ENABLE_WPTRACK
         _sockets.Connected(s);
+#else
+#endif
+      }
     }
     LeaveCriticalSection(&cs);
   }
-#else
-#endif
 #ifdef TRACE_WINSOCK
   ATLTRACE(_T("select returned %d"), ret);
 #endif
