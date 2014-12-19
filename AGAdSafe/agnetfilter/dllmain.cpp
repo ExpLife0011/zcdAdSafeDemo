@@ -1,12 +1,155 @@
 // dllmain.cpp : 定义 DLL 应用程序的入口点。
 #include "stdafx.h"
 
+#include <Windows.h>
+#include <tchar.h>
+#include <Imm.h>
+#include <atlstr.h>
+#pragma comment(lib, "Imm32.lib")
+#include "InputMoniter.h"
 
-//begin
+#include "util.h"
+
+
+//-------------------------------------------------------------
+// shared data 
+// Notice:	seen by both: the instance of "HookInjEx.dll" mapped
+//			into "explorer.exe" as well as by the instance
+//			of "HookInjEx.dll" mapped into our "HookInjEx.exe"
+#pragma data_seg (".shared")
+int		g_bSubclassed = 0;	// START button subclassed?
+UINT	WM_HOOKEX = 0;
+HWND	g_hWnd	= 0;		// handle of START button
+HHOOK g_hKbHook = NULL;
+HHOOK g_hCallwndHook = NULL;
+#pragma data_seg ()
+
+#pragma comment(linker,"/SECTION:.shared,RWS")
+
+TCHAR GUID_HOOKMSG[_MAX_PATH] = {_T("WM_HOOKEX_RK" )};
+HINSTANCE g_hInstance = NULL;
+
+
+void installGeHookDll();
+void uninstallGeHookDll();
+BOOL InstallCallwndHook();
+BOOL UninstallCallwndHook();
+BOOL InstallKbHook();
+BOOL UninstallKbHook();
+
+BOOL InstallFilter()
+{
+  BOOL ret = FALSE;
+  //InstallCallwndHook();
+  InstallKbHook();
+  return ret;
+}
+
+BOOL UninstallFilter()
+{ 
+  BOOL ret= FALSE;
+	//::SendMessageTimeout(HWND_BROADCAST,WM_HOOKEX,0,0, SMTO_BLOCK, 1500, 0);
+  //UninstallCallwndHook();
+  UninstallKbHook();
+  return ret;
+}
+
+/////////////////////
+LRESULT CALLBACK KbHookProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+
+    TCHAR host_name[MAX_PATH]; 
+  ::GetModuleFileName( NULL, host_name, MAX_PATH );
+  LPTSTR lpName = ::PathFindFileNameW(host_name);
+  CString IEName =_T("iexplore.exe");
+  bool isIE = (0 == IEName.CompareNoCase(lpName));
+  ::OutputDebugString(lpName);
+
+	if (nCode < 0)
+	{
+		return CallNextHookEx(g_hKbHook, nCode, wParam, lParam);
+	}
+	if (nCode != HC_ACTION)
+	{
+		return CallNextHookEx(g_hKbHook, nCode, wParam, lParam);
+	}
+
+	//::SendMessageTimeout(HWND_BROADCAST,WM_HOOKEX,0,1, SMTO_BLOCK, 1500, 0);
+  installGeHookDll();
+
+	return CallNextHookEx(g_hKbHook, nCode, wParam, lParam);
+}
+
+BOOL InstallKbHook()
+{
+  WriteAGLog("EnableKeyboardCapture");
+  if(g_hKbHook == NULL)
+  {
+  g_hKbHook=SetWindowsHookExW(WH_KEYBOARD, (HOOKPROC)KbHookProc, g_hInstance, 0);
+  if (g_hKbHook == NULL)
+  {
+	  WriteAGLog("SetWindowsHookEx FALSE");
+	  return FALSE;
+  }
+  WriteAGLog("SetWindowsHookEx TRUE");
+  }
+  return TRUE;
+}
+// 导出函数：解除键盘锁定
+BOOL UninstallKbHook()
+{
+	WriteAGLog("DisableKeyboardCapture");
+	BOOL bOK = UnhookWindowsHookEx(g_hKbHook);
+
+	g_hKbHook = NULL;
+	WriteAGLog("UnhookWindowsHookEx TRUE");
+	return bOK;
+}
+
+// end
+
+BOOL APIENTRY DllMain( HMODULE hModule,
+                       DWORD  ul_reason_for_call,
+                       LPVOID lpReserved
+					 )
+{
+  TCHAR szPath[_MAX_PATH+1]={0};
+	if (ul_reason_for_call ==  DLL_PROCESS_ATTACH)
+  {
+
+    g_hInstance = (HINSTANCE)hModule;
+
+    //EnableKeyboardCapture();
+    DisableThreadLibraryCalls(hModule); 
+    //::GetModuleFileName(hModule,szPath,_MAX_PATH);
+    //::LoadLibrary(szPath);
+    ////::FreeLibraryAndExitThread(hModule,0);
+    //// Safely remove hook
+    ////::UnhookWindowsHookEx( g_hKbHook );
+    //::GetModuleFileName(NULL,szPath,_MAX_PATH);
+    //::OutputDebugString(szPath);
+
+		if( WM_HOOKEX==NULL )
+			WM_HOOKEX = ::RegisterWindowMessage( GUID_HOOKMSG);			
+    }
+  else if( DLL_THREAD_ATTACH ==ul_reason_for_call)
+  {
+  }
+  else if( DLL_THREAD_DETACH ==ul_reason_for_call)
+  {
+  }
+  else if( DLL_PROCESS_DETACH ==ul_reason_for_call)
+  {
+  }
+
+	return TRUE;
+}
+
 //#define _USE_WINHTTP_
-//#define _USE_WININET_
-//#define _USE_WINSOCK_
-#define _USE_WPTSOCK_
+#//define _USE_WININET_
+
+#define _USE_WINSOCK_
+
 #ifdef _USE_WINHTTP_
 #include "WinHttpHook.h"
 #elif defined(_USE_WININET_)
@@ -20,82 +163,13 @@
 #include "WinInetHook.h"
 #endif
 
-
-
-#include <Windows.h>
-#include <tchar.h>
-#include <Imm.h>
-#include <atlstr.h>
-#pragma comment(lib, "Imm32.lib")
-#include "InputMoniter.h"
-
-#include "util.h"
-
-HINSTANCE g_hInstance = NULL;
-HHOOK g_hKbHook = NULL;
 BOOL g_bWinHttpApiHook = FALSE;
 BOOL g_bWinInetApiHook = FALSE;
 BOOL g_bWinsockApiHook = FALSE;
 BOOL g_bWptsockApiHook = FALSE;
 
-///////////////////
-// log
-// void WriteAGLog(LPCSTR cstr)
-// {
-// 	char szFileFullPath[MAX_PATH*sizeof(char)];
-// 	::GetModuleFileNameA(NULL, szFileFullPath, MAX_PATH*sizeof(char));
-// 
-// 	string s = szFileFullPath;
-// 	int len = strlen(szFileFullPath);
-// 	char *cfilename = strrchr(szFileFullPath, '\\');
-// 	//char szFileName[128]='\0';
-// 	//strcpy(szFileName, szFileFullPath+begin);
-// 	char log[128];
-// 	memset(log, 0, 128*sizeof(char));
-// 	strcpy(log, cfilename+1);
-// 	int loglen = strlen(log);
-// 	memset(log+loglen-3, 'l', sizeof(char));
-// 	memset(log+loglen-2, 'o', sizeof(char));
-// 	memset(log+loglen-1, 'g', sizeof(char));
-// 
-// 	char prefix[MAX_PATH]; memset(prefix, 0, MAX_PATH);
-// 	strcpy(prefix, "e:\\temp\\logs\\");
-// 	char *logpath = strcat(prefix, log);
-// 
-// 	//
-// 	struct tm *local;
-// 	time_t t;
-// 	t=time(NULL);
-// 	local = localtime(&t);
-// 	
-// 	//
-// 	FILE *fp = fopen(logpath, "a+");
-// 	if (fp)
-// 	{
-// 		fprintf(fp, "%2d:%2d:%2d\t%s\n", local->tm_hour, local->tm_min, local->tm_sec, cstr);
-// 		fclose(fp);
-// 		fp = NULL;
-// 	}
-// 
-// }
-/////////////////////
-LRESULT CALLBACK KbHookProc(int nCode, WPARAM wParam, LPARAM lParam)
+void installGeHookDll()
 {
-	if (nCode < 0)
-	{
-		return CallNextHookEx(g_hKbHook, nCode, wParam, lParam);
-	}
-	if (nCode != HC_ACTION)
-	{
-		return CallNextHookEx(g_hKbHook, nCode, wParam, lParam);
-	}
-
-// 	if (!::FindWindow(0, _T("KeyBoard Locked")))
-// 	{
-// 		::MessageBox(0, _T("键盘锁定！"), _T("KeyBoard Locked"), MB_OK);
-// 	}
-//	return 1;
-
 #ifdef _USE_WINHTTP_
 	if (g_bWinHttpApiHook == FALSE)
 	{
@@ -132,102 +206,161 @@ LRESULT CALLBACK KbHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 		g_bWinInetApiHook = WinInetInstallHooks();
 	}
 #endif
+}
+
+void uninstallGeHookDll()
+{
+#ifdef _USE_WINHTTP_
+	WinHttpRemoveHooks();
+#elif defined(_USE_WININET_)
+	WinInetRemoveHooks();
+#elif defined(_USE_WINSOCK_)
+	WinsockRemoveHooks();
+  //g_bWinsockApiHook = FALSE;
+#elif defined(_USE_WPTSOCK_)
+  WptsockRemoveHooks();
+#else
+	WinHttpRemoveHooks();
+	WinInetRemoveHooks();
+#endif
+}
+
+
+//-------------------------------------------------------------
+// global variables (unshared!)
+//
+
+//-------------------------------------------------------------
+// HookProc
+// Notice:
+// - executed by the instance of "HookInjEx.dll" mapped into "explorer.exe";
+//
+// When called from InjectDll:
+//	  -	sublasses the start button;
+//	  -	removes the hook, but the DLL stays in the remote process
+//		though, because we increased its reference count via LoadLibray
+//		(this way we disturb the target process as litle as possible);
+//
+// When called from UnmapDll:
+//	  -	restores the old window procedure for the start button;
+//	  - reduces the reference count of the DLL (via FreeLibrary);
+//	  -	removes the hook, so the DLL is unmapped;
+//
+//		Also note, that the DLL isn't unmapped immediately after the
+//		call to UnhookWindowsHookEx, but in the near future
+//		(right after finishing with the current message).
+//		Actually it's obvious why: windows can NOT unmap the 
+//		DLL in the middle of processing a meesage, because the code
+//		in the hook procedure is still required. 
+//		That's why we can change the order LoadLibrary/FreeLibrary &
+//		UnhookWindowsHookEx are called.
+//
+//		FreeLibrary, in contrast, unmapps the DLL imeditaley if the 
+//		reference count reaches zero.
+//
+
+LRESULT CallwndHookProc (
+  int code,       // hook code
+  WPARAM wParam,  // virtual-key code = 
+  LPARAM lParam   // keystroke-message information
+)
+{
+  TCHAR host_name[MAX_PATH]; 
+  ::GetModuleFileName( NULL, host_name, MAX_PATH );
+  LPTSTR lpName = ::PathFindFileNameW(host_name);
+  CString IEName =_T("iexplore.exe");
+  bool isIE = (0 == IEName.CompareNoCase(lpName));
+  ::OutputDebugString(lpName);
+  if(!isIE) goto END;
+  
+  CWPSTRUCT* pCW = ((CWPSTRUCT*)lParam);
+
+	if( (pCW->message == WM_HOOKEX) && pCW->lParam ) 
+	{
+		//::UnhookWindowsHookEx( g_hCallwndHook );
+
+		if( g_bSubclassed ) 
+			goto END;		// already subclassed?
+		
+		// Let's increase the reference count of the DLL (via LoadLibrary),
+		// so it's NOT unmapped once the hook is removed;
+		TCHAR lib_name[MAX_PATH]; 
+		::GetModuleFileName( g_hInstance, lib_name, MAX_PATH );
+						
+		if( !::LoadLibrary( lib_name ) )
+			goto END;		
+
+    installGeHookDll();
+    g_bSubclassed = true;
+	}
+	else if( pCW->message == WM_HOOKEX ) 
+	{
+		//::UnhookWindowsHookEx( g_hCallwndHook );
+
+		// Failed to restore old window procedure? => Don't unmap the
+		// DLL either. Why? Because then "explorer.exe" would call our
+		// "unmapped" NewProc and  crash!!
+    uninstallGeHookDll();
+
+		if( false)
+			goto END;
+
+		::FreeLibrary( g_hInstance );
+
+		//::MessageBeep(MB_OK);
+		g_bSubclassed = false;	
+	}
+
+END:
+	return ::CallNextHookEx(g_hCallwndHook, code, wParam, lParam);
+}
+
+
+
+
+//-------------------------------------------------------------
+// InjectDll
+// Notice: 
+//	- injects "HookInjEx.dll" into "explorer.exe" (via SetWindowsHookEx);
+//	- subclasses the START button (see HookProc for more details);
+//
+//		Parameters: - hWnd = START button handle
+//
+//		Return value:	1 - success;
+//						0 - failure;
+//
+int InstallCallwndHook( )
+{	
+	// Hook "explorer.exe"
+	g_hCallwndHook = SetWindowsHookEx( WH_CALLWNDPROC,(HOOKPROC)CallwndHookProc,
+								g_hInstance, 0 );
+	if( g_hCallwndHook==NULL )
+		return 0;
 	
-	return CallNextHookEx(g_hKbHook, nCode, wParam, lParam);
-}
-BOOL EnableKeyboardCapture()
-{
-	WriteAGLog("EnableKeyboardCapture");
-  if(g_hKbHook == NULL)
-  {
-  g_hKbHook=SetWindowsHookExW(WH_KEYBOARD, (HOOKPROC)KbHookProc, g_hInstance, 0);
-	if (g_hKbHook == NULL)
-	{
-		WriteAGLog("SetWindowsHookEx FALSE");
-		return FALSE;
-	}
-	WriteAGLog("SetWindowsHookEx TRUE");
-  }
-	return TRUE;
-}
-// 导出函数：解除键盘锁定
-BOOL DisableKeyboardCapture()
-{
-	WriteAGLog("DisableKeyboardCapture");
-  BOOL bOK = UnhookWindowsHookEx(g_hKbHook);
-#ifdef _USE_WINHTTP_
-	WinHttpRemoveHooks();
-#elif defined(_USE_WININET_)
-	WinInetRemoveHooks();
-#elif defined(_USE_WINSOCK_)
-	WinsockRemoveHooks();
-  //g_bWinsockApiHook = FALSE;
-#elif defined(_USE_WPTSOCK_)
-  WptsockRemoveHooks();
-#else
-	WinHttpRemoveHooks();
-	WinInetRemoveHooks();
-#endif
-  g_hKbHook = NULL;
-	WriteAGLog("UnhookWindowsHookEx TRUE");
-	return bOK;
-}
+	// By the time SendMessage returns, 
+	// the START button has already been subclassed
+	//::SendMessageTimeout(HWND_BROADCAST,WM_HOOKEX,0,1, SMTO_BLOCK, 1500, 0);
 
-BOOL DisableKeyboardCaptureHook()
-{
-	WriteAGLog("DisableKeyboardCapture");
-  BOOL bOK = UnhookWindowsHookEx(g_hKbHook);
-  g_hKbHook = NULL;
-	WriteAGLog("UnhookWindowsHookEx TRUE");
-	return bOK;
-}
-BOOL DisableKeyboardCaptureRemove()
-{
-  BOOL bOK = TRUE;
-#ifdef _USE_WINHTTP_
-	WinHttpRemoveHooks();
-#elif defined(_USE_WININET_)
-	WinInetRemoveHooks();
-#elif defined(_USE_WINSOCK_)
-	WinsockRemoveHooks();
-  //g_bWinsockApiHook = FALSE;
-#elif defined(_USE_WPTSOCK_)
-  WptsockRemoveHooks();
-#else
-	WinHttpRemoveHooks();
-	WinInetRemoveHooks();
-#endif
-	return bOK;
-}
-// end
-
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-					 )
-{
-  TCHAR szPath[_MAX_PATH+1]={0};
-	switch (ul_reason_for_call)
-	{
-	case DLL_PROCESS_ATTACH:
-		//EnableKeyboardCapture();
-    DisableThreadLibraryCalls(hModule); 
-    ::GetModuleFileName(hModule,szPath,_MAX_PATH);
-    ::LoadLibrary(szPath);
-    //::FreeLibraryAndExitThread(hModule,0);
-    // Safely remove hook
-    //::UnhookWindowsHookEx( g_hKbHook );
-    ::GetModuleFileName(NULL,szPath,_MAX_PATH);
-    ::OutputDebugString(szPath);
-
-  case DLL_THREAD_ATTACH:
-	case DLL_THREAD_DETACH:
-	case DLL_PROCESS_DETACH:
-		//DisableKeyboardCapture();
-		break;
-	}
-	g_hInstance = (HINSTANCE)hModule;
-	return TRUE;
+	return g_bSubclassed;
 }
 
 
+//-------------------------------------------------------------
+// UnmapDll
+// Notice: 
+//	- restores the old window procedure for the START button;
+//	- unmapps the DLL from the remote process
+//	  (see HookProc for more details);
+//
+//		Return value:	1 - success;
+//						0 - failure;
+//
+int UninstallCallwndHook( )
+{	
+	//::SendMessageTimeout(HWND_BROADCAST,WM_HOOKEX,0,0, SMTO_BLOCK, 1500, 0);
+
+  UnhookWindowsHookEx( g_hCallwndHook);
+	g_hCallwndHook =NULL;	
+
+	return (g_bSubclassed == NULL);
+}
