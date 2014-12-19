@@ -173,10 +173,8 @@ BOOL CHookDialogDemoDlg::KBLock(BOOL sign)
   if( g_hFilterInst ==NULL)
   {
 	g_hFilterInst = ::LoadLibrary(_T("agnetfilter.dll"));//g_hFilterInst=::LoadLibrary(_T("HookDll.dll"));       //º”‘ÿDLL
-		g_loadhook=(LOADHOOK)::GetProcAddress (g_hFilterInst,"EnableKeyboardCapture");
-		g_unloadhook=(UNLOADHOOK)::GetProcAddress (g_hFilterInst,"DisableKeyboardCapture");
-		g_unloadhookHook=(UNLOADHOOK)::GetProcAddress (g_hFilterInst,"DisableKeyboardCaptureHook");
-		g_unloadhookRemove=(UNLOADHOOK)::GetProcAddress (g_hFilterInst,"DisableKeyboardCaptureRemove");
+		g_loadhook=(LOADHOOK)::GetProcAddress (g_hFilterInst,"InstallFilter");
+		g_unloadhook=(UNLOADHOOK)::GetProcAddress (g_hFilterInst,"UninstallFilter");
     ::GetModuleFileName(g_hFilterInst,szPath,_MAX_PATH);
 		if(g_loadhook==NULL||g_unloadhook==NULL)
 		{
@@ -197,10 +195,10 @@ BOOL CHookDialogDemoDlg::KBLock(BOOL sign)
 		{
       g_unloadhookHook();
       //g_unloadhookRemove();
-      ::KGEnumProcEjectLibrary(szPath);
+      //::KGEnumProcEjectLibrary(szPath);
 			//bOK =g_unloadhook();
 
-			//::FreeLibrary(g_hFilterInst);g_hFilterInst = NULL;
+			::FreeLibrary(g_hFilterInst);g_hFilterInst = NULL;
 		}
 			//::FreeLibrary(g_hFilterInst);g_hFilterInst = NULL;
 		return 1;
