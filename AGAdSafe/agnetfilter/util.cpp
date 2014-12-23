@@ -19,19 +19,19 @@ void WriteAGLog(LPCSTR cstr)
 	//strcpy(szFileName, szFileFullPath+begin);
 	char log[MAX_PATH];
 	memset(log, 0, MAX_PATH*sizeof(char));
-	strcpy(log, cfilename+1);
+	lstrcpyA(log, cfilename+1);
 	int loglen = strlen(log);
 	memset(log+loglen-3, 'l', sizeof(char));
 	memset(log+loglen-2, 'o', sizeof(char));
 	memset(log+loglen-1, 'g', sizeof(char));
 
 	char prefix[MAX_PATH]; memset(prefix, 0, MAX_PATH);
-	strcpy(prefix, "e:\\temp\\logs\\");
-	char *logpath = strcat(prefix, log);
+	lstrcpyA(prefix, "e:\\temp\\logs\\");
+	char *logpath = lstrcatA(prefix, log);
 
   char curlog[MAX_PATH] ={0};
-	strcpy(curlog, szFileFullPath);
-  strcat(curlog,".log");
+	lstrcpyA(curlog, szFileFullPath);
+  lstrcatA(curlog,".log");
   logpath = curlog;
 	//
 	struct tm *local;
@@ -53,7 +53,7 @@ void WriteAGLog(LPCSTR cstr)
 
 // DLL_Injection.cpp : 定义 DLL 应用程序的导出函数。
 //
- 
+/* 
 #include "stdafx.h"
 //#include "DLL_Injection.h"
 #include <process.h>
@@ -65,7 +65,7 @@ std::list<DLL> Dll_List;
 extern DWORD EventSize;
  
 //提升进程权限
-bool EnableDebugPrivilege(const LPTSTR name)
+bool EnableDebugPrivilege(const LPCTSTR name)
 {
      HANDLE token;
      TOKEN_PRIVILEGES tp;
@@ -128,3 +128,5 @@ bool LoadDllToProcess(TCHAR *Path,DWORD Id)
     }
     return true;
 }
+
+*/
