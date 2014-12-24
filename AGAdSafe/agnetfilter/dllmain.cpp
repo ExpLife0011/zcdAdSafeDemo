@@ -146,9 +146,8 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 }
 
 //#define _USE_WINHTTP_
-#//define _USE_WININET_
-
-#define _USE_WINSOCK_
+//#define _USE_WININET_
+//#define _USE_WINSOCK_
 
 #ifdef _USE_WINHTTP_
 #include "WinHttpHook.h"
@@ -159,6 +158,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 #elif defined(_USE_WPTSOCK_)
 #include "WptsockHook.h"
 #else
+#include "WptsockHook.h"
 #include "WinHttpHook.h"
 #include "WinInetHook.h"
 #endif
@@ -205,6 +205,11 @@ void installGeHookDll()
 		WriteAGLog("WinInetInstallHooks");
 		g_bWinInetApiHook = WinInetInstallHooks();
 	}
+  if (g_bWptsockApiHook==FALSE)
+	{
+		WriteAGLog("WptsockInstallHooks");
+		g_bWptsockApiHook = WptsockInstallHooks();
+	}
 #endif
 }
 
@@ -222,6 +227,7 @@ void uninstallGeHookDll()
 #else
 	WinHttpRemoveHooks();
 	WinInetRemoveHooks();
+	WptsockRemoveHooks();
 #endif
 }
 
