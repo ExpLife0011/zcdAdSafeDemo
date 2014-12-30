@@ -3,31 +3,17 @@
 
 #include <Windows.h>
 #include <tchar.h>
-#include <Imm.h>
+//#include <Imm.h>
 #include <atlstr.h>
-#pragma comment(lib, "Imm32.lib")
+//#pragma comment(lib, "Imm32.lib")
 #include "InputMoniter.h"
 
 #include "util.h"
+#include "shared_mem.h"
 
 
-//-------------------------------------------------------------
-// shared data 
-// Notice:	seen by both: the instance of "HookInjEx.dll" mapped
-//			into "explorer.exe" as well as by the instance
-//			of "HookInjEx.dll" mapped into our "HookInjEx.exe"
-#pragma data_seg (".shared")
-int		g_bSubclassed = 0;	// START button subclassed?
-UINT	WM_HOOKEX = 0;
-HWND	g_hWnd	= 0;		// handle of START button
-HHOOK g_hKbHook = NULL;
-HHOOK g_hCallwndHook = NULL;
-#pragma data_seg ()
-
-#pragma comment(linker,"/SECTION:.shared,RWS")
-
-TCHAR GUID_HOOKMSG[_MAX_PATH] = {_T("WM_HOOKEX_RK" )};
 HINSTANCE g_hInstance = NULL;
+int g_bNetHooked = 0;// START button subclassed?
 
 
 void installGeHookDll();
@@ -148,6 +134,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 //#define _USE_WINHTTP_
 //#define _USE_WININET_
 //#define _USE_WINSOCK_
+#define _USE_WPTSOCK_
 
 #ifdef _USE_WINHTTP_
 #include "WinHttpHook.h"
@@ -266,59 +253,53 @@ void uninstallGeHookDll()
 //
 
 LRESULT CallwndHookProc (
-  int code,       // hook code
+  int nCode,       // hook code
   WPARAM wParam,  // virtual-key code = 
   LPARAM lParam   // keystroke-message information
 )
 {
-  TCHAR host_name[MAX_PATH]; 
-  ::GetModuleFileName( NULL, host_name, MAX_PATH );
-  LPTSTR lpName = ::PathFindFileNameW(host_name);
-  CString IEName =_T("iexplore.exe");
-  bool isIE = (0 == IEName.CompareNoCase(lpName));
-  ::OutputDebugString(lpName);
-  if(!isIE) goto END;
-  
-  CWPSTRUCT* pCW = ((CWPSTRUCT*)lParam);
+  if (nCode < 0) // do not process message
+    return CallNextHookEx(g_hCallwndHook, nCode, wParam, lParam);
 
-	if( (pCW->message == WM_HOOKEX) && pCW->lParam ) 
-	{
-		//::UnhookWindowsHookEx( g_hCallwndHook );
+  if (nCode >= HC_ACTION)
+  {
+    LPMSG msg = (LPMSG)lParam;
+    LPCWPSTRUCT cmsg = (LPCWPSTRUCT)lParam;
+    if (cmsg->message == WM_HOOKEX && cmsg->lParam ) 
+    {
+      do{
+      //::UnhookWindowsHookEx( g_hCallwndHook );
+      //if( g_bSubclassed ) break;;		// already subclassed?
 
-		if( g_bSubclassed ) 
-			goto END;		// already subclassed?
-		
-		// Let's increase the reference count of the DLL (via LoadLibrary),
-		// so it's NOT unmapped once the hook is removed;
-		TCHAR lib_name[MAX_PATH]; 
-		::GetModuleFileName( g_hInstance, lib_name, MAX_PATH );
-						
-		if( !::LoadLibrary( lib_name ) )
-			goto END;		
+      // Let's increase the reference count of the DLL (via LoadLibrary),
+      // so it's NOT unmapped once the hook is removed;
+      TCHAR lib_name[MAX_PATH]; 
+      ::GetModuleFileName( g_hInstance, lib_name, MAX_PATH );
+      if( !::LoadLibrary( lib_name ) )  break;
 
-    installGeHookDll();
-    g_bSubclassed = true;
-	}
-	else if( pCW->message == WM_HOOKEX ) 
-	{
-		//::UnhookWindowsHookEx( g_hCallwndHook );
+      installGeHookDll();
+      g_bNetHooked = true;
+      }while(false);
 
-		// Failed to restore old window procedure? => Don't unmap the
-		// DLL either. Why? Because then "explorer.exe" would call our
-		// "unmapped" NewProc and  crash!!
-    uninstallGeHookDll();
+    }
+    else if( cmsg->message == WM_HOOKEX ) 
+    {
+      do{
+      //::UnhookWindowsHookEx( g_hCallwndHook );
 
-		if( false)
-			goto END;
+      // Failed to restore old window procedure? => Don't unmap the
+      // DLL either. Why? Because then "explorer.exe" would call our
+      // "unmapped" NewProc and  crash!!
+      uninstallGeHookDll();
 
-		::FreeLibrary( g_hInstance );
+      ::FreeLibrary( g_hInstance );
 
-		//::MessageBeep(MB_OK);
-		g_bSubclassed = false;	
-	}
+      g_bNetHooked = false;
+      }while(false);
+    }
+  }
 
-END:
-	return ::CallNextHookEx(g_hCallwndHook, code, wParam, lParam);
+  return ::CallNextHookEx(g_hCallwndHook, nCode, wParam, lParam);
 }
 
 
