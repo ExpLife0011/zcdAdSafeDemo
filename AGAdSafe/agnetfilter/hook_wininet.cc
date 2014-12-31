@@ -88,9 +88,9 @@ hookOpenA(true)
 {
  WriteAGLog("CWinInetHook");
  InitializeCriticalSection(&cs);
- 
+
  //parents.InitHashTable(257);
- initHooks();
+ //initHooks();
 }
 
 CWinInetHook::~CWinInetHook(void)
@@ -102,7 +102,7 @@ CWinInetHook::~CWinInetHook(void)
  WriteAGLog("~CWinInetHook");
 }
 
-void CWinInetHook::initHooks(void)
+void CWinInetHook::Init(void)
 {
   if(gs_pWinInetHook == NULL)
     gs_pWinInetHook = this;
@@ -121,7 +121,7 @@ void CWinInetHook::initHooks(void)
 HINTERNET CWinInetHook::InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType, LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags)
 {
  HINTERNET ret = NULL;
- 
+
  if ( _InternetOpenW )
  {
   ret = _InternetOpenW(lpszAgent, dwAccessType, lpszProxy, lpszProxyBypass, dwFlags);

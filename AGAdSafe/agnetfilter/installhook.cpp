@@ -1,132 +1,300 @@
+
+#include "stdafx.h"
+#include "installhook.h"
+#include "shared_mem.h"
 #include "util.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string>
-#include <iostream>
-using namespace std;
+#include "wpthook.h"
 
-void WriteAGLog(LPCSTR cstr)
+BOOL g_bNetHooked = false;
+
+BOOL InstallFilter()
 {
-  OutputDebugStringA(cstr);
-	return;	// chrome下，会出现183错误：创建已存在的文件。故此函数直接返回。
-	char szFileFullPath[MAX_PATH*sizeof(char)];
-	::GetModuleFileNameA(NULL, szFileFullPath, MAX_PATH*sizeof(char));
+  BOOL ret = FALSE;
+  //InstallCallwndHook();
+  InstallKbHook();
+  return ret;
+}
 
-	string s = szFileFullPath;
-	int len = strlen(szFileFullPath);
-	char *cfilename = strrchr(szFileFullPath, '\\');
-	//char szFileName[128]='\0';
-	//strcpy(szFileName, szFileFullPath+begin);
-	char log[MAX_PATH];
-	memset(log, 0, MAX_PATH*sizeof(char));
-	lstrcpyA(log, cfilename+1);
-	int loglen = strlen(log);
-	memset(log+loglen-3, 'l', sizeof(char));
-	memset(log+loglen-2, 'o', sizeof(char));
-	memset(log+loglen-1, 'g', sizeof(char));
+BOOL UninstallFilter()
+{ 
+  BOOL ret= FALSE;
+	//::SendMessageTimeout(HWND_BROADCAST,WM_HOOKEX,0,0, SMTO_BLOCK, 1500, 0);
+  //UninstallCallwndHook();
+  UninstallKbHook();
+  return ret;
+}
 
-	char prefix[MAX_PATH]; memset(prefix, 0, MAX_PATH);
-	lstrcpyA(prefix, "e:\\temp\\logs\\");
-	char *logpath = lstrcatA(prefix, log);
+// end
+/////////////////////
+LRESULT CALLBACK KbHookProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
 
-  char curlog[MAX_PATH] ={0};
-	lstrcpyA(curlog, szFileFullPath);
-  lstrcatA(curlog,".log");
-  logpath = curlog;
-	//
-	struct tm *local;
-	time_t t;
-	t=time(NULL);
-	local = localtime(&t);
+    TCHAR host_name[MAX_PATH]; 
+  ::GetModuleFileName( NULL, host_name, MAX_PATH );
+  LPTSTR lpName = ::PathFindFileNameW(host_name);
+  CString IEName =_T("iexplore.exe");
+  bool isIE = (0 == IEName.CompareNoCase(lpName));
+  ::OutputDebugString(lpName);
 
-	//
-	FILE *fp = fopen(logpath, "a+");
-	if (fp)
+	if (nCode < 0)
 	{
-		fprintf(fp, "%2d:%2d:%2d\t%s\n", local->tm_hour, local->tm_min, local->tm_sec, cstr);
-		fclose(fp);
-		fp = NULL;
+		return CallNextHookEx(g_hKbHook, nCode, wParam, lParam);
+	}
+	if (nCode != HC_ACTION)
+	{
+		return CallNextHookEx(g_hKbHook, nCode, wParam, lParam);
 	}
 
+	//::SendMessageTimeout(HWND_BROADCAST,WM_HOOKEX,0,1, SMTO_BLOCK, 1500, 0);
+  installGeHookDll();
+
+	return CallNextHookEx(g_hKbHook, nCode, wParam, lParam);
+}
+
+BOOL InstallKbHook()
+{
+  WriteAGLog("EnableKeyboardCapture");
+  if(g_hKbHook == NULL)
+  {
+  g_hKbHook=SetWindowsHookExW(WH_KEYBOARD, (HOOKPROC)KbHookProc, g_hInstance, 0);
+  if (g_hKbHook == NULL)
+  {
+	  WriteAGLog("SetWindowsHookEx FALSE");
+	  return FALSE;
+  }
+  WriteAGLog("SetWindowsHookEx TRUE");
+  }
+  return TRUE;
+}
+// 导出函数：解除键盘锁定
+BOOL UninstallKbHook()
+{
+	WriteAGLog("DisableKeyboardCapture");
+	BOOL bOK = UnhookWindowsHookEx(g_hKbHook);
+
+	g_hKbHook = NULL;
+	WriteAGLog("UnhookWindowsHookEx TRUE");
+	return bOK;
 }
 
 
-// DLL_Injection.cpp : 定义 DLL 应用程序的导出函数。
+//#define _USE_WINHTTP_
+//#define _USE_WININET_
+//#define _USE_WINSOCK_
+#define _USE_WPTSOCK_
+
+#ifdef _USE_WINHTTP_
+#include "WinHttpHook.h"
+#elif defined(_USE_WININET_)
+#include "WinInetHook.h"
+#elif defined(_USE_WINSOCK_)
+#include "WinsockHook.h"
+#elif defined(_USE_WPTSOCK_)
+#include "WptsockHook.h"
+#else
+#include "WptsockHook.h"
+#include "WinHttpHook.h"
+#include "WinInetHook.h"
+#endif
+
+BOOL g_bWinHttpApiHook = FALSE;
+BOOL g_bWinInetApiHook = FALSE;
+BOOL g_bWinsockApiHook = FALSE;
+BOOL g_bWptsockApiHook = FALSE;
+
+void installGeHookDll()
+{
+#ifdef _USE_WINHTTP_
+	if (g_bWinHttpApiHook == FALSE)
+	{
+		WriteAGLog("WinHttpInstallHooks");
+		g_bWinHttpApiHook = WinHttpInstallHooks();
+	}
+#elif defined(_USE_WININET_)
+	if (g_bWinInetApiHook==FALSE)
+	{
+		WriteAGLog("WinInetInstallHooks");
+		g_bWinInetApiHook = WinInetInstallHooks();
+	}
+#elif defined(_USE_WINSOCK_)
+	if (g_bWinsockApiHook==FALSE)
+	{
+		WriteAGLog("WinsockInstallHooks");
+		g_bWinsockApiHook = WinsockInstallHooks();
+	}
+#elif defined(_USE_WPTSOCK_)
+	if (g_bWptsockApiHook==FALSE)
+	{
+		WriteAGLog("WptsockInstallHooks");
+		g_bWptsockApiHook = WptsockInstallHooks();
+	}
+#else
+	if (g_bWinHttpApiHook == FALSE)
+	{
+		WriteAGLog("WinHttpInstallHooks");
+		g_bWinHttpApiHook = WinHttpInstallHooks();
+	}
+	if (g_bWinInetApiHook==FALSE)
+	{
+		WriteAGLog("WinInetInstallHooks");
+		g_bWinInetApiHook = WinInetInstallHooks();
+	}
+  if (g_bWptsockApiHook==FALSE)
+	{
+		WriteAGLog("WptsockInstallHooks");
+		g_bWptsockApiHook = WptsockInstallHooks();
+	}
+#endif
+}
+
+void uninstallGeHookDll()
+{
+#ifdef _USE_WINHTTP_
+	WinHttpRemoveHooks();
+#elif defined(_USE_WININET_)
+	WinInetRemoveHooks();
+#elif defined(_USE_WINSOCK_)
+	WinsockRemoveHooks();
+  //g_bWinsockApiHook = FALSE;
+#elif defined(_USE_WPTSOCK_)
+  WptsockRemoveHooks();
+#else
+	WinHttpRemoveHooks();
+	WinInetRemoveHooks();
+	WptsockRemoveHooks();
+#endif
+}
+
+
+//-------------------------------------------------------------
+// global variables (unshared!)
 //
-/* 
-#include "stdafx.h"
-//#include "DLL_Injection.h"
-#include <process.h>
-#include <list>
-#include <vector>
-#include <TlHelp32.h>
-std::list<DLL> Dll_List;
- 
-extern DWORD EventSize;
- 
-//提升进程权限
-bool EnableDebugPrivilege(const LPCTSTR name)
+
+//-------------------------------------------------------------
+// HookProc
+// Notice:
+// - executed by the instance of "HookInjEx.dll" mapped into "explorer.exe";
+//
+// When called from InjectDll:
+//	  -	sublasses the start button;
+//	  -	removes the hook, but the DLL stays in the remote process
+//		though, because we increased its reference count via LoadLibray
+//		(this way we disturb the target process as litle as possible);
+//
+// When called from UnmapDll:
+//	  -	restores the old window procedure for the start button;
+//	  - reduces the reference count of the DLL (via FreeLibrary);
+//	  -	removes the hook, so the DLL is unmapped;
+//
+//		Also note, that the DLL isn't unmapped immediately after the
+//		call to UnhookWindowsHookEx, but in the near future
+//		(right after finishing with the current message).
+//		Actually it's obvious why: windows can NOT unmap the 
+//		DLL in the middle of processing a meesage, because the code
+//		in the hook procedure is still required. 
+//		That's why we can change the order LoadLibrary/FreeLibrary &
+//		UnhookWindowsHookEx are called.
+//
+//		FreeLibrary, in contrast, unmapps the DLL imeditaley if the 
+//		reference count reaches zero.
+//
+
+LRESULT CallwndHookProc (
+  int nCode,       // hook code
+  WPARAM wParam,  // virtual-key code = 
+  LPARAM lParam   // keystroke-message information
+)
 {
-     HANDLE token;
-     TOKEN_PRIVILEGES tp;
-    //打开进程令牌环
-     if(!OpenProcessToken(GetCurrentProcess(),
-        TOKEN_ADJUST_PRIVILEGES|TOKEN_QUERY,&token))
-   {
-      return false;
-   }
-   //获得进程本地唯一ID
-    LUID luid;
-    if(!LookupPrivilegeValue(NULL,name,&luid))
+  if (nCode < 0) // do not process message
+    return CallNextHookEx(g_hCallwndHook, nCode, wParam, lParam);
+
+  if (nCode >= HC_ACTION)
+  {
+    LPMSG msg = (LPMSG)lParam;
+    LPCWPSTRUCT cmsg = (LPCWPSTRUCT)lParam;
+    if (cmsg->message == WM_HOOKEX && cmsg->lParam ) 
     {
-         return false;
+      do{
+      //::UnhookWindowsHookEx( g_hCallwndHook );
+      //if( g_bSubclassed ) break;;		// already subclassed?
+
+      // Let's increase the reference count of the DLL (via LoadLibrary),
+      // so it's NOT unmapped once the hook is removed;
+      TCHAR lib_name[MAX_PATH]; 
+      ::GetModuleFileName( g_hInstance, lib_name, MAX_PATH );
+      if( !::LoadLibrary( lib_name ) )  break;
+
+      installGeHookDll();
+      g_bNetHooked = true;
+      }while(false);
+
     }
-    tp.PrivilegeCount=1;
-    tp.Privileges[0].Attributes=SE_PRIVILEGE_ENABLED;
-    tp.Privileges[0].Luid=luid;
-    //调整进程权限
-    if(!AdjustTokenPrivileges(token,0,&tp,sizeof(TOKEN_PRIVILEGES),NULL,NULL))
+    else if( cmsg->message == WM_HOOKEX ) 
     {
-        return false;
+      do{
+      //::UnhookWindowsHookEx( g_hCallwndHook );
+
+      // Failed to restore old window procedure? => Don't unmap the
+      // DLL either. Why? Because then "explorer.exe" would call our
+      // "unmapped" NewProc and  crash!!
+      uninstallGeHookDll();
+
+      ::FreeLibrary( g_hInstance );
+
+      g_bNetHooked = false;
+      }while(false);
     }
-    return true;
-}
-     
-bool LoadDllToProcess(TCHAR *Path,DWORD Id)
-{
-    EnableDebugPrivilege(SE_DEBUG_NAME);
-    HANDLE Process=OpenProcess(PROCESS_ALL_ACCESS,FALSE,Id);
-    if(Process==NULL)
-    {
-        return false;
-    }
-    else
-    {
-        size_t Size=wcslen(Path)*sizeof(TCHAR)+1;
-        BYTE *Param=(BYTE *)VirtualAllocEx(Process,NULL,Size,MEM_COMMIT,PAGE_READWRITE);
-        if(Param)
-        {
-            if(WriteProcessMemory(Process,Param,Path,Size,NULL))
-            {
-                VirtualProtectEx(Process,Param,Size,PAGE_READONLY,NULL);
-                if(CreateRemoteThread(Process,NULL,0,(LPTHREAD_START_ROUTINE)LoadLibrary,
-                                     Param,NULL,NULL)==NULL)
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                CloseHandle(Process);
-                return false;
-            }
-        }
-        else
-        {
-            return false;
-        }
-    }
-    return true;
+  }
+
+  return ::CallNextHookEx(g_hCallwndHook, nCode, wParam, lParam);
 }
 
-*/
+
+
+
+//-------------------------------------------------------------
+// InjectDll
+// Notice: 
+//	- injects "HookInjEx.dll" into "explorer.exe" (via SetWindowsHookEx);
+//	- subclasses the START button (see HookProc for more details);
+//
+//		Parameters: - hWnd = START button handle
+//
+//		Return value:	1 - success;
+//						0 - failure;
+//
+int InstallCallwndHook( )
+{	
+	// Hook "explorer.exe"
+	g_hCallwndHook = SetWindowsHookEx( WH_CALLWNDPROC,(HOOKPROC)CallwndHookProc,
+								g_hInstance, 0 );
+	if( g_hCallwndHook==NULL )
+		return 0;
+	
+	// By the time SendMessage returns, 
+	// the START button has already been subclassed
+	//::SendMessageTimeout(HWND_BROADCAST,WM_HOOKEX,0,1, SMTO_BLOCK, 1500, 0);
+
+	return g_bSubclassed;
+}
+
+
+//-------------------------------------------------------------
+// UnmapDll
+// Notice: 
+//	- restores the old window procedure for the START button;
+//	- unmapps the DLL from the remote process
+//	  (see HookProc for more details);
+//
+//		Return value:	1 - success;
+//						0 - failure;
+//
+int UninstallCallwndHook( )
+{	
+	//::SendMessageTimeout(HWND_BROADCAST,WM_HOOKEX,0,0, SMTO_BLOCK, 1500, 0);
+
+  UnhookWindowsHookEx( g_hCallwndHook);
+	g_hCallwndHook =NULL;	
+
+	return (g_bSubclassed == NULL);
+}

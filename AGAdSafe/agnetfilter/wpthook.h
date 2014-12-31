@@ -28,21 +28,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include "hook_winsock.h"
-#include "hook_nspr.h"
-#include "hook_schannel.h"
+//#include "hook_nspr.h"
+//#include "hook_schannel.h"
 #include "hook_wininet.h"
-#include "requests.h"
-#include "track_dns.h"
-#include "track_sockets.h"
-#include "test_state.h"
-#include "results.h"
-#include "screen_capture.h"
-#include "test_server.h"
-#include "wpt_test_hook.h"
-#include "dev_tools.h"
-#include "trace.h"
+#include "hook_ws2.h"
 
-extern HINSTANCE global_dll_handle; // DLL handle
+extern HINSTANCE g_hInstance; // DLL handle
 
 class WptHook {
 public:
@@ -50,44 +41,10 @@ public:
   ~WptHook(void);
 
   void Init();
-  void BackgroundThread();
-  bool OnMessage(UINT message, WPARAM wParam, LPARAM lParam);
 
-  // extension actions
-  void Start();
-  void OnAllDOMElementsLoaded(DWORD load_time);
-  void SetDomContentLoadedEvent(DWORD start, DWORD end);
-  void SetLoadEvent(DWORD start, DWORD end);
-  void SetFirstPaint(DWORD first_paint);
-  void OnLoad();
-  void OnNavigate();
-  void OnNavigateComplete();
-  void Report();
-  void OnReport();
 
 private:
-  CWsHook   winsock_hook_;
-  NsprHook  nspr_hook_;
-  SchannelHook  schannel_hook_;
-  WinInetHook wininet_hook_;
-  HANDLE    background_thread_;
-  HANDLE    background_thread_started_;
-  HWND      message_window_;
-  CString   file_base_;
-  bool      done_;
-  bool      reported_;
-  UINT      report_message_;
+  CWs2Hook   winsock_hook_;
+  CWinInetHook wininet_hook_;
 
-  // winsock event tracking
-  TrackDns      dns_;
-  TrackSockets  sockets_;
-  Requests      requests_;
-
-  TestState     test_state_;
-  Results       results_;
-  ScreenCapture screen_capture_;
-  TestServer    test_server_;
-  WptTestHook   test_;
-  DevTools      dev_tools_;
-  Trace         trace_;
 };

@@ -169,6 +169,7 @@ BOOL CHookDialogDemoDlg::KBLock(BOOL sign)
 {
   TCHAR szPath[_MAX_PATH+1]={0};
   ::GetModuleFileName(g_hFilterInst,szPath,_MAX_PATH);
+  //::KGEnumProcEjectLibrary(szPath);
 
   if( g_hFilterInst ==NULL)
   {
@@ -210,13 +211,30 @@ BOOL CHookDialogDemoDlg::KBLock(BOOL sign)
 void CHookDialogDemoDlg::OnBnClickedBtnHook()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	KBLock(TRUE);
+	//KBLock(TRUE);
+  TCHAR szPath[_MAX_PATH+1]={0};
+  //HINSTANCE hFilterInst = ::LoadLibrary(_T("agnetfilter.dll"));
+  //::GetModuleFileName(hFilterInst,szPath,_MAX_PATH);
+  //FreeLibrary(hFilterInst);
+#ifdef _DEBUG
+  CString str =_T("D:\\work\\work_zcdadsafedemo.wc2\\agadsafe\\Debug\\agnetfilter.dll");
+#else
+  CString str =_T("D:\\work\\work_zcdadsafedemo.wc2\\agadsafe\\Release\\agnetfilter.dll");
+#endif
+  KGEnumProcInjectLibraryIE(str);
 }
 
 void CHookDialogDemoDlg::OnBnClickedBtnUnHook()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	KBLock(FALSE);
+	//KBLock(FALSE);
+  TCHAR szPath[_MAX_PATH+1]={0};
+#ifdef _DEBUG
+  CString str =_T("D:\\work\\work_zcdadsafedemo.wc2\\agadsafe\\Debug\\agnetfilter.dll");
+#else
+  CString str =_T("D:\\work\\work_zcdadsafedemo.wc2\\agadsafe\\Release\\agnetfilter.dll");
+#endif
+  KGEnumProcEjectLibraryIE(str);
 }
 
 void CHookDialogDemoDlg::OnBnClickedBtnOpenSite()

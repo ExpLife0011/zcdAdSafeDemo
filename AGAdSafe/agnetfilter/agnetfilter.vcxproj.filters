@@ -57,6 +57,12 @@
     <ClCompile Include="shared_mem.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="installhook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="wpthook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="InputMoniter.h">
@@ -96,6 +102,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="shared_mem.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="installhook.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="wpthook.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

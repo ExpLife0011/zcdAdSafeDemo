@@ -16,7 +16,7 @@ class CWinInetHook
 public:
  CWinInetHook(void);
  virtual ~CWinInetHook(void);
- void initHooks(void);
+ void Init(void);
 
  HINTERNET InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType, LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags);
  HINTERNET InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType, LPCSTR lpszProxy, LPCSTR lpszProxyBypass, DWORD dwFlags);

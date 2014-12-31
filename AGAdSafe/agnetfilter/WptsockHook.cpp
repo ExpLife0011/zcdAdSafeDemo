@@ -2,13 +2,13 @@
 #include "stdafx.h"
 #include "hook_winsock.h"
 
-static CWsHook * gs_pWptsockHook = NULL;
+static CWinsockHook * gs_pWptsockHook = NULL;
 
 
 BOOL WptsockInstallHooks()
 {
   if(!gs_pWptsockHook)
-    gs_pWptsockHook = new CWsHook();
+    gs_pWptsockHook = new CWinsockHook();
   return gs_pWptsockHook!=NULL;
 }
 
