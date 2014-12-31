@@ -18,6 +18,8 @@ UNLOADHOOK g_unloadhook;
 UNLOADHOOK g_unloadhookHook;
 UNLOADHOOK g_unloadhookRemove;
 
+typedef void (CALLBACK *ENABLER)(bool);
+ENABLER g_setproxy;
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -76,6 +78,7 @@ BEGIN_MESSAGE_MAP(CHookDialogDemoDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON2, &CHookDialogDemoDlg::OnBnClickedBtnUnHook)
 	ON_BN_CLICKED(IDC_BUTTON3, &CHookDialogDemoDlg::OnBnClickedBtnOpenSite)
 	ON_BN_CLICKED(IDC_BUTTON4, &CHookDialogDemoDlg::OnBnClickedBtnOpenHttpByWinsock)
+  ON_BN_CLICKED(IDC_BUTTON5, &CHookDialogDemoDlg::OnBnClickedButton5)
 END_MESSAGE_MAP()
 
 
@@ -222,6 +225,9 @@ void CHookDialogDemoDlg::OnBnClickedBtnHook()
   CString str =_T("D:\\work\\work_zcdadsafedemo.wc2\\agadsafe\\Release\\agnetfilter.dll");
 #endif
   KGEnumProcInjectLibraryIE(str);
+  UINT WM_HOOKEX = ::RegisterWindowMessage(_T("WM_HOOKEX_RK" ));
+   ::PostMessage(HWND_BROADCAST,WM_HOOKEX,1,1);
+
 }
 
 void CHookDialogDemoDlg::OnBnClickedBtnUnHook()
@@ -234,70 +240,105 @@ void CHookDialogDemoDlg::OnBnClickedBtnUnHook()
 #else
   CString str =_T("D:\\work\\work_zcdadsafedemo.wc2\\agadsafe\\Release\\agnetfilter.dll");
 #endif
+  //::PostMessage(HWND_BROADCAST,WM_HOOKEX,0,0);
+  //UINT WM_HOOKEX = ::RegisterWindowMessage(_T("WM_HOOKEX_RK" ));
+   //::PostMessage(HWND_BROADCAST,WM_HOOKEX,0,0);
   KGEnumProcEjectLibraryIE(str);
+
+  //HINSTANCE hFilterInst = ::LoadLibrary(str);
+  //g_setproxy = (ENABLER)::GetProcAddress (hFilterInst,"ZcnSetProxyEnabled");
+  //g_setproxy(false);
+  //FreeLibrary(hFilterInst);
 }
 
 void CHookDialogDemoDlg::OnBnClickedBtnOpenSite()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	m_test.Navigate(_T("http://www.baidu.com"), NULL, NULL, NULL, NULL);
+  static int idx = 0;
+  static CString arr[] ={_T("http://www.baidu.com"),_T("http://www.126.com"),_T("http://www.sogou.com")};
+	m_test.Navigate(arr[idx], NULL, NULL, NULL, NULL);
+  idx ++;idx %=3;
 }
-
 void CHookDialogDemoDlg::OnBnClickedBtnOpenHttpByWinsock()
 {
-	// TODO: 在此添加控件通知处理程序代码
-	SOCKET      sSocket      = INVALID_SOCKET;
-	SOCKADDR_IN stSvrAddrIn = {0}; /* 服务器端地址 */
-	char sndBuf[10240] = {0};
-	char rcvBuf[20480] = {0};
-	char       *pRcv  = rcvBuf;
-	int  num   = 0;
-	int  nRet  = SOCKET_ERROR;
-
-	WSADATA     wsaData;
-
-	/* HTTP 消息构造开始，这是程序的关键之处 */
-	//CONNECT XXX.XXX.XXX:80 HTTP/1.1\r\n\r\n
-	sprintf(sndBuf,"");
-	strcat(sndBuf,"GET / HTTP/1.1\r\n HOST:www.baidu.com\r\n\r\n");
-	strcat(sndBuf,"\r\n");
-	/* HTTP 消息构造结束 */
-
-	/* socket DLL初始化 */
-	WSAStartup(MAKEWORD(2, 0), &wsaData);
-
-	stSvrAddrIn.sin_family      = AF_INET;
-	stSvrAddrIn.sin_port = htons(9999);
-	stSvrAddrIn.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-	sSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-	/* 连接 */
-	nRet = connect(sSocket, (SOCKADDR*)&stSvrAddrIn, sizeof(SOCKADDR));
-	if (SOCKET_ERROR == nRet)
-	{
-		printf("connect fail!/n");
-		return;
-	}
-	printf("connnect ok\r\n");
-	/* 发送HTTP请求消息 */
-	send(sSocket, (char*)sndBuf, sizeof(sndBuf), 0);
-
-	/* 接收HTTP响应消息 */
-	while(1)
-	{
-		num = recv(sSocket, pRcv, sizeof(rcvBuf), 0);
-
-		pRcv += num;
-
-		if((0 == num) || (-1 == num))
-		{
-			break ;
-		}
-	}
-
-	/* 打印响应消息 */
-	printf("%s/n", rcvBuf);
-
+  #ifdef _DEBUG
+  CString str =_T("D:\\work\\work_zcdadsafedemo.wc2\\agadsafe\\Debug\\agnetfilter.dll");
+#else
+  CString str =_T("D:\\work\\work_zcdadsafedemo.wc2\\agadsafe\\Release\\agnetfilter.dll");
+#endif
+    
+  g_hFilterInst = ::LoadLibrary(str);
+  
 }
 
+//
+//void CHookDialogDemoDlg::OnBnClickedBtnOpenHttpByWinsock()
+//{
+//	// TODO: 在此添加控件通知处理程序代码
+//	SOCKET      sSocket      = INVALID_SOCKET;
+//	SOCKADDR_IN stSvrAddrIn = {0}; /* 服务器端地址 */
+//	char sndBuf[10240] = {0};
+//	char rcvBuf[20480] = {0};
+//	char       *pRcv  = rcvBuf;
+//	int  num   = 0;
+//	int  nRet  = SOCKET_ERROR;
+//
+//	WSADATA     wsaData;
+//
+//	/* HTTP 消息构造开始，这是程序的关键之处 */
+//	//CONNECT XXX.XXX.XXX:80 HTTP/1.1\r\n\r\n
+//	sprintf(sndBuf,"");
+//	strcat(sndBuf,"GET / HTTP/1.1\r\n HOST:www.baidu.com\r\n\r\n");
+//	strcat(sndBuf,"\r\n");
+//	/* HTTP 消息构造结束 */
+//
+//	/* socket DLL初始化 */
+//	WSAStartup(MAKEWORD(2, 0), &wsaData);
+//
+//	stSvrAddrIn.sin_family      = AF_INET;
+//	stSvrAddrIn.sin_port = htons(9999);
+//	stSvrAddrIn.sin_addr.s_addr = inet_addr("127.0.0.1");
+//
+//	sSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+//
+//	/* 连接 */
+//	nRet = connect(sSocket, (SOCKADDR*)&stSvrAddrIn, sizeof(SOCKADDR));
+//	if (SOCKET_ERROR == nRet)
+//	{
+//		printf("connect fail!/n");
+//		return;
+//	}
+//	printf("connnect ok\r\n");
+//	/* 发送HTTP请求消息 */
+//	send(sSocket, (char*)sndBuf, sizeof(sndBuf), 0);
+//
+//	/* 接收HTTP响应消息 */
+//	while(1)
+//	{
+//		num = recv(sSocket, pRcv, sizeof(rcvBuf), 0);
+//
+//		pRcv += num;
+//
+//		if((0 == num) || (-1 == num))
+//		{
+//			break ;
+//		}
+//	}
+//
+//	/* 打印响应消息 */
+//	printf("%s/n", rcvBuf);
+//
+//}
+
+
+
+void CHookDialogDemoDlg::OnBnClickedButton5()
+{
+  // TODO: 在此添加控件通知处理程序代码
+  if(g_hFilterInst)
+  {
+  FreeLibrary(g_hFilterInst);
+  g_hFilterInst = NULL;
+  }
+  
+}

@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "StdAfx.h"
 #include "hook_ws2.h"
 #include "util.h"
+#include "shared_mem.h"
 
 #pragma comment(lib, "ws2_32.lib")
 #define INCL_WINSOCK_API_TYPEDEFS 1
@@ -73,16 +74,13 @@ int WSAAPI AmhConnectHook(IN SOCKET s, const struct sockaddr FAR * name, IN int 
       stSvrAddrIn.sin_family = AF_INET;
       stSvrAddrIn.sin_port = htons(8888);
       stSvrAddrIn.sin_addr.s_addr = inet_addr("127.0.0.1");
+      if(!shared_proxy_enabled) bMark = TRUE;
       if (bMark)
       {
-
         ret = g_pWsHook->connect(s, name, namelen);
       }
       else
       {
-        //ret =  g_pWsHook->connect(s, name, namelen);
-        //unsigned long ul = 0;
-        //ioctlsocket (s, FIONBIO, (unsigned long*)&ul);
         ret =  g_pWsHook->connect(s, (SOCKADDR*)&stSvrAddrIn/*name*/, sizeof(SOCKADDR)/*namelen*/);
       }
 
@@ -132,17 +130,26 @@ CWs2Hook::~CWs2Hook()
     g_pWsHook = NULL;
     //hook.removeHook(_connect);
     _connect = NULL;
+    Destroy();
   }
 
   DeleteCriticalSection(&cs);
 }
+void CWs2Hook::Destroy(void)
+{
+  delete hook_;
+  hook_ = NULL;
+  _connect = NULL;
+}
+
 void CWs2Hook::Init()
 {
   if (!g_pWsHook)
     g_pWsHook = this;
 
+  hook_ = new NCodeHookIA32();
   // install the code hooks
-  _connect = hook.createHookByName("ws2_32.dll", "connect", AmhConnectHook);
+  _connect = hook_->createHookByName("ws2_32.dll", "connect", AmhConnectHook);
 
 }
 

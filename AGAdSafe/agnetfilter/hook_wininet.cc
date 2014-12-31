@@ -107,6 +107,8 @@ void CWinInetHook::Init(void)
   if(gs_pWinInetHook == NULL)
     gs_pWinInetHook = this;
 
+
+
  _InternetOpenW = hook.createHookByName("wininet.dll", "InternetOpenW", InternetOpenW_Hook);
  _InternetOpenA = hook.createHookByName("wininet.dll", "InternetOpenA", InternetOpenA_Hook);
  if (_InternetOpenW==NULL && _InternetOpenA==NULL)

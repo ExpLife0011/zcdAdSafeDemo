@@ -45,11 +45,8 @@ HWND g_hWnd = 0;  // handle of START button
 HHOOK g_hKbHook = NULL;
 HHOOK g_hCallwndHook = NULL;
 TCHAR GUID_HOOKMSG[_MAX_PATH] = {_T("WM_HOOKEX_RK" )};
-#pragma data_seg ()
+bool shared_proxy_enabled = true;
 
-#pragma comment(linker,"/SECTION:.SharedDataName,RWS")
-
-#pragma data_seg (".shared")
 HHOOK shared_hook_handle = 0;
 WCHAR shared_results_file_base[MAX_PATH] = {NULL};
 DWORD shared_test_timeout = 120000;
@@ -64,7 +61,9 @@ WCHAR shared_browser_exe[MAX_PATH] = {NULL};
 DWORD shared_browser_process_id = 0;
 #pragma data_seg ()
 
-#pragma comment(linker,"/SECTION:.shared,RWS")
+#pragma comment(linker,"/SECTION:.SharedDataName,RWS")
+
+
 
 /*-----------------------------------------------------------------------------
   Set the base file name to use for results files

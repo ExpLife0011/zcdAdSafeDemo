@@ -16,13 +16,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// 中文(中华人民共和国) resources
+// 中文(简体，中国) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
-#ifdef _WIN32
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 #pragma code_page(936)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -100,7 +98,8 @@ BEGIN
     PUSHBUTTON      "UnHook",IDC_BUTTON2,72,7,50,14
     CONTROL         "",IDC_EXPLORER1,"{8856F961-340A-11D0-A96B-00C04FD705A2}",WS_TABSTOP,7,27,306,147
     PUSHBUTTON      "Button3",IDC_BUTTON3,255,7,50,14
-    PUSHBUTTON      "WinSockGetHttp",IDC_BUTTON4,177,7,60,14
+    PUSHBUTTON      "WinSockGetHttp",IDC_BUTTON4,130,7,60,14
+    PUSHBUTTON      "Button5",IDC_BUTTON5,203,7,50,14
 END
 
 
@@ -149,7 +148,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_ABOUTBOX, DIALOG
     BEGIN
@@ -196,12 +195,12 @@ END
 // String Table
 //
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_ABOUTBOX            "关于 HookDialogDemo(&A)..."
 END
 
-#endif    // 中文(中华人民共和国) resources
+#endif    // 中文(简体，中国) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

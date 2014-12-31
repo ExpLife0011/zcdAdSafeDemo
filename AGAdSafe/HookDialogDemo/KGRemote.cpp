@@ -231,7 +231,8 @@ DWORD KGEnumProcEjectLibrary(LPCTSTR lpcszPath)
 
 
 //#define BROWSER_PROCESS _T("iexplore.exe")
-#define BROWSER_PROCESS _T("chrome.exe")
+//#define BROWSER_PROCESS _T("chrome.exe")
+#define BROWSER_PROCESS _T("HookDialogDemo.exe")
 
 DWORD KGEnumProcInjectLibraryIE(LPCTSTR lpcszPath)
 {

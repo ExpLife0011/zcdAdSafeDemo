@@ -26,7 +26,17 @@ NCodeHook<ArchT>::~NCodeHook()
 	if (cleanOnDestruct_)
 	{
 		// restore all hooks and free memory
-		for (size_t i = hookedFunctions_.size(); i > 0; --i) removeHook(hookedFunctions_[i - 1]);
+    size_t ma = hookedFunctions_.size();
+		for (size_t i =ma ; i > 0; --i) 
+      {
+        //removeHook(hookedFunctions_[i - 1]);
+    }
+    map<uintptr_t, NCodeHookItem>::const_iterator cit = hookedFunctions_.begin();
+	while(cit != hookedFunctions_.end())
+	{
+		removeHook(cit->second);
+		++cit;
+	}
 		VirtualFree(trampolineBuffer_, 0, MEM_RELEASE);
 	}
 }
@@ -126,7 +136,7 @@ U NCodeHook<ArchT>::createHookByName(const string& dll, const string& funcName, 
 	HMODULE hDll = LoadLibraryA(dll.c_str());
 	funcPtr = (U)GetProcAddress(hDll, funcName.c_str());
 	if (funcPtr != NULL) funcPtr = createHook(funcPtr, newFunc);
-	//FreeLibrary(hDll);
+	FreeLibrary(hDll);
 	return funcPtr;
 }
 

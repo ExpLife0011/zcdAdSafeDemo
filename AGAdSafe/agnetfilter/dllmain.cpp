@@ -18,9 +18,15 @@ HINSTANCE g_hInstance = NULL;
 extern WptHook * global_hook;
 
 extern "C" {
-__declspec( dllexport ) void __stdcall ZcnInstallHook(void);
-__declspec( dllexport ) void __stdcall ZcnUnInstallHook(void);
+__declspec( dllexport ) void ZcnInstallHook(void);
+__declspec( dllexport ) void ZcnUnInstallHook(void);
+__declspec( dllexport ) void WINAPI ZcnSetProxyEnabled(bool enableProxy);
 }
+
+void WINAPI ZcnSetProxyEnabled(bool cleared_cache) {
+  shared_proxy_enabled = cleared_cache;
+}
+
 
 static DWORD WINAPI ZcnHookThreadProc(void* arg)
 {
@@ -33,7 +39,7 @@ static DWORD WINAPI ZcnHookThreadProc(void* arg)
   return 0;
 }
 
-void WINAPI ZcnInstallHook(void)
+void ZcnInstallHook(void)
 {
   static bool started = false;
   if (!started)
@@ -53,6 +59,7 @@ static DWORD WINAPI ZcnUnHookThreadProc(void* arg)
   // actually do the startup work
   if( global_hook) 
   {
+    global_hook->Destroy();
     delete global_hook;
     global_hook = NULL;
   }
@@ -60,17 +67,75 @@ static DWORD WINAPI ZcnUnHookThreadProc(void* arg)
   return 0;
 }
 
-void WINAPI ZcnUnInstallHook(void)
+void ZcnUnInstallHook(void)
 {
   static bool started = false;
   if (!started)
   {
     started = true;
     HANDLE thread_handle = CreateThread(NULL, 0, ::ZcnUnHookThreadProc, 0, 0, NULL);
+    ::Sleep(3000);
     if (thread_handle)
       CloseHandle(thread_handle);
+
+  if( global_hook) 
+  {
+    global_hook->Destroy();
+    delete global_hook;
+    global_hook = NULL;
+  }
   }
   return;
+}
+
+
+
+
+HHOOK global_hCallwndHook = NULL;
+
+LRESULT ZcnCallwndHookProc (
+  int nCode,       // hook code
+  WPARAM wParam,  // virtual-key code =
+  LPARAM lParam   // keystroke-message information
+)
+{
+  if (nCode < 0) // do not process message
+    return CallNextHookEx(global_hCallwndHook, nCode, wParam, lParam);
+
+  if (nCode >= HC_ACTION)
+  {
+    LPMSG msg = (LPMSG)lParam;
+    LPCWPSTRUCT cmsg = (LPCWPSTRUCT)lParam;
+    if (cmsg->message == WM_HOOKEX && cmsg->lParam )
+    {
+      do{
+      ZcnInstallHook();
+      }while(false);
+
+    }
+    else if( cmsg->message == WM_HOOKEX )
+    {
+      do{
+      ZcnUnInstallHook();
+
+      }while(false);
+    }
+  }
+
+  return ::CallNextHookEx(global_hCallwndHook, nCode, wParam, lParam);
+}
+int ZcnInstallCallwndHook( )
+{
+  DWORD id = 0;//GetCurrentProcessId();GetCurrentThreadId
+  global_hCallwndHook = SetWindowsHookEx( WH_CALLWNDPROC,(HOOKPROC)ZcnCallwndHookProc,g_hInstance, id );
+
+  return (global_hCallwndHook != NULL);
+}
+int ZcnUnInstallCallwndHook( )
+{
+  UnhookWindowsHookEx( global_hCallwndHook);
+  global_hCallwndHook =NULL;
+  return (global_hCallwndHook == NULL);
 }
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -108,11 +173,12 @@ BOOL APIENTRY DllMain( HMODULE hModule,
         {
           ok = TRUE;
           g_hInstance = (HINSTANCE)hModule;
-
+          if(WM_HOOKEX == 0) WM_HOOKEX = ::RegisterWindowMessage(GUID_HOOKMSG);
           // IE gets instrumented from the BHO so don't start the actual
           // hooking, just let the DLL load
           //if (lstrcmpi(exe, _T("iexplore.exe")))
             ZcnInstallHook();
+            //ZcnInstallCallwndHook();
             //
             ::MessageBeep(MB_OK);
         }
@@ -124,7 +190,10 @@ BOOL APIENTRY DllMain( HMODULE hModule,
       break;
     case DLL_PROCESS_DETACH:
       {
+        
         ZcnUnInstallHook();
+        //ZcnUnInstallCallwndHook();
+         ::MessageBeep(MB_OK);
       }
       break;
   }

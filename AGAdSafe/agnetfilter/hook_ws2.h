@@ -37,10 +37,11 @@ public:
   CWs2Hook(void);
   virtual ~CWs2Hook(void);
   void Init();
+  void Destroy();
 
   int connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen);
 private:
-  NCodeHookIA32  hook;
+  NCodeHookIA32*  hook_;
   CRITICAL_SECTION cs;
 
 

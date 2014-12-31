@@ -41,7 +41,7 @@ public:
   ~WptHook(void);
 
   void Init();
-
+  void Destroy();
 
 private:
   CWs2Hook   winsock_hook_;

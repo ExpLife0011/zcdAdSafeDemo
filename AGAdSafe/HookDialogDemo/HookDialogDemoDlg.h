@@ -37,4 +37,5 @@ public:
 	CExplorer1 m_test;
 	afx_msg void OnBnClickedBtnOpenSite();
 	afx_msg void OnBnClickedBtnOpenHttpByWinsock();
+  afx_msg void OnBnClickedButton5();
 };

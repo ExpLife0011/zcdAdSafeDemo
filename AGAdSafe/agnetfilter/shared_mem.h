@@ -50,4 +50,4 @@ extern HHOOK g_hKbHook;
 extern HHOOK g_hCallwndHook ;
 extern TCHAR GUID_HOOKMSG[_MAX_PATH] ;
 
-
+extern bool shared_proxy_enabled ;
