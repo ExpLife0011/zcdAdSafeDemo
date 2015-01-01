@@ -1,4 +1,3 @@
-#pragma once 
 #include "NCodeHook.cpp"
 
 template class NCodeHook<ArchitectureIA32>;
