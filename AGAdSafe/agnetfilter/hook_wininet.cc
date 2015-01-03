@@ -96,28 +96,46 @@ hookOpenA(true)
 CWinInetHook::~CWinInetHook(void)
 {
   if(gs_pWinInetHook == this)
+  {
     gs_pWinInetHook = NULL;
 
- DeleteCriticalSection(&cs);
+  this->Destroy();
+  }
+  DeleteCriticalSection(&cs);
  WriteAGLog("~CWinInetHook");
+}
+
+void CWinInetHook::Destroy(void)
+{
+    if( hook_)
+    {
+  delete hook_;
+  hook_ = NULL;
+  
+    }
+    _InternetOpenW = NULL;
+    _InternetOpenA = NULL;
+    _InternetConnectW = NULL;
+    _InternetConnectA = NULL;
+
 }
 
 void CWinInetHook::Init(void)
 {
   if(gs_pWinInetHook == NULL)
     gs_pWinInetHook = this;
+  if( hook_ ) return;
+  hook_ =  new NCodeHookIA32();
 
-
-
- _InternetOpenW = hook.createHookByName("wininet.dll", "InternetOpenW", InternetOpenW_Hook);
- _InternetOpenA = hook.createHookByName("wininet.dll", "InternetOpenA", InternetOpenA_Hook);
+ _InternetOpenW = hook_->createHookByName("wininet.dll", "InternetOpenW", InternetOpenW_Hook);
+ _InternetOpenA = hook_->createHookByName("wininet.dll", "InternetOpenA", InternetOpenA_Hook);
  if (_InternetOpenW==NULL && _InternetOpenA==NULL)
  {
   //::MessageBox(0, _T("apihooked"), _T("CWinInetHook"), MB_OK);
  }
 
- _InternetConnectW = hook.createHookByName("wininet.dll", "InternetConnectW", InternetConnectW_Hook);
- _InternetConnectA = hook.createHookByName("wininet.dll", "InternetConnectA", InternetConnectA_Hook);
+ _InternetConnectW = hook_->createHookByName("wininet.dll", "InternetConnectW", InternetConnectW_Hook);
+ _InternetConnectA = hook_->createHookByName("wininet.dll", "InternetConnectA", InternetConnectA_Hook);
 }
 
 HINTERNET CWinInetHook::InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType, LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags)

@@ -211,6 +211,13 @@ BOOL CHookDialogDemoDlg::KBLock(BOOL sign)
 	return 0;
 }
 
+//#ifdef _DEBUG
+// CString ROOTDIR =_T("D:\\work\\work_zcdadsafedemo.wc2\\agadsafe\\Debug\\");
+//#else
+// CString ROOTDIR =_T("D:\\work\\work_zcdadsafedemo.wc2\\agadsafe\\Release\\");
+//#endif
+ CString ROOTDIR =_T("");
+
 void CHookDialogDemoDlg::OnBnClickedBtnHook()
 {
 	// TODO: 在此添加控件通知处理程序代码
@@ -219,11 +226,7 @@ void CHookDialogDemoDlg::OnBnClickedBtnHook()
   //HINSTANCE hFilterInst = ::LoadLibrary(_T("agnetfilter.dll"));
   //::GetModuleFileName(hFilterInst,szPath,_MAX_PATH);
   //FreeLibrary(hFilterInst);
-#ifdef _DEBUG
-  CString str =_T("D:\\work\\work_zcdadsafedemo.wc2\\agadsafe\\Debug\\agnetfilter.dll");
-#else
-  CString str =_T("D:\\work\\work_zcdadsafedemo.wc2\\agadsafe\\Release\\agnetfilter.dll");
-#endif
+  CString str =ROOTDIR+_T("agnetfilter.dll");
   KGEnumProcInjectLibraryIE(str);
   UINT WM_HOOKEX = ::RegisterWindowMessage(_T("WM_HOOKEX_RK" ));
    ::PostMessage(HWND_BROADCAST,WM_HOOKEX,1,1);
@@ -235,20 +238,21 @@ void CHookDialogDemoDlg::OnBnClickedBtnUnHook()
 	// TODO: 在此添加控件通知处理程序代码
 	//KBLock(FALSE);
   TCHAR szPath[_MAX_PATH+1]={0};
-#ifdef _DEBUG
-  CString str =_T("D:\\work\\work_zcdadsafedemo.wc2\\agadsafe\\Debug\\agnetfilter.dll");
-#else
-  CString str =_T("D:\\work\\work_zcdadsafedemo.wc2\\agadsafe\\Release\\agnetfilter.dll");
-#endif
+  CString str =ROOTDIR+_T("agnetfilter.dll");
   //::PostMessage(HWND_BROADCAST,WM_HOOKEX,0,0);
   //UINT WM_HOOKEX = ::RegisterWindowMessage(_T("WM_HOOKEX_RK" ));
    //::PostMessage(HWND_BROADCAST,WM_HOOKEX,0,0);
-  KGEnumProcEjectLibraryIE(str);
+  //KGEnumProcEjectLibraryIE(str);
 
   //HINSTANCE hFilterInst = ::LoadLibrary(str);
   //g_setproxy = (ENABLER)::GetProcAddress (hFilterInst,"ZcnSetProxyEnabled");
   //g_setproxy(false);
   //FreeLibrary(hFilterInst);
+    g_loadhook=(LOADHOOK)::GetProcAddress (g_hFilterInst,"ZcnUnInstallHook");
+    if(g_loadhook)
+    {
+        g_loadhook();
+    }
 }
 
 void CHookDialogDemoDlg::OnBnClickedBtnOpenSite()
@@ -261,11 +265,8 @@ void CHookDialogDemoDlg::OnBnClickedBtnOpenSite()
 }
 void CHookDialogDemoDlg::OnBnClickedBtnOpenHttpByWinsock()
 {
-  #ifdef _DEBUG
-  CString str =_T("D:\\work\\work_zcdadsafedemo.wc2\\agadsafe\\Debug\\agnetfilter.dll");
-#else
-  CString str =_T("D:\\work\\work_zcdadsafedemo.wc2\\agadsafe\\Release\\agnetfilter.dll");
-#endif
+ ::LoadLibrary(_T("ws2_32.dll"));
+  CString str =ROOTDIR+_T("agnetfilter.dll");
     
   g_hFilterInst = ::LoadLibrary(str);
   

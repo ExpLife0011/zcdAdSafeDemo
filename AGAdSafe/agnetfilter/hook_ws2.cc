@@ -50,7 +50,7 @@ static CWs2Hook * g_pWsHook = NULL;
 ******************************************************************************/
 
 
-int WSAAPI AmhConnectHook(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
+int WINAPI  AmhConnectHook(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
 {
   WriteAGLog("connect_AGHook Begin");
   int ret = SOCKET_ERROR;
@@ -61,26 +61,31 @@ int WSAAPI AmhConnectHook(IN SOCKET s, const struct sockaddr FAR * name, IN int 
       BOOL bMark = FALSE;
       if (name!=NULL)
       {
+          WriteAGLog(".1A");
         sockaddr_in sin;
         memcpy(&sin, &name, sizeof(sin));
 
-        WriteAGLog("");
+        WriteAGLog(".1B");
         if(sin.sin_port==htons(9222))
         {
           bMark = TRUE;
         }
       }
+      WriteAGLog(".1C");
       SOCKADDR_IN stSvrAddrIn = {0};
       stSvrAddrIn.sin_family = AF_INET;
       stSvrAddrIn.sin_port = htons(8888);
       stSvrAddrIn.sin_addr.s_addr = inet_addr("127.0.0.1");
-      if(!shared_proxy_enabled) bMark = TRUE;
+      //if(!shared_proxy_enabled) bMark = TRUE;
+      WriteAGLog(".1F");
       if (bMark)
       {
+          WriteAGLog(".2A");
         ret = g_pWsHook->connect(s, name, namelen);
       }
       else
       {
+          WriteAGLog(".2B");
         ret =  g_pWsHook->connect(s, (SOCKADDR*)&stSvrAddrIn/*name*/, sizeof(SOCKADDR)/*namelen*/);
       }
 
@@ -129,17 +134,21 @@ CWs2Hook::~CWs2Hook()
   {
     g_pWsHook = NULL;
     //hook.removeHook(_connect);
-    _connect = NULL;
     Destroy();
+    _connect = NULL;
   }
 
   DeleteCriticalSection(&cs);
 }
 void CWs2Hook::Destroy(void)
 {
+    if( hook_)
+    {
   delete hook_;
   hook_ = NULL;
-  _connect = NULL;
+  
+    }
+    _connect = NULL;
 }
 
 void CWs2Hook::Init()
@@ -153,15 +162,17 @@ void CWs2Hook::Init()
 
 }
 
-int  CWs2Hook::connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
+int WINAPI CWs2Hook::connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
 {
   int ret = SOCKET_ERROR;
-
+  WriteAGLog(" CWs2Hook::connect.Begin");
   if (_connect)
   {
+      WriteAGLog(" CWs2Hook::connect.1");
     ret = _connect(s, name, namelen);
+    WriteAGLog(" CWs2Hook::connect.2");
   }
-
+  WriteAGLog(" CWs2Hook::connect.END");
   return ret;
 }
 

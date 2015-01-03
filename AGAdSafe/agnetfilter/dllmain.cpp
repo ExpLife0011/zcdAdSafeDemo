@@ -73,14 +73,14 @@ void ZcnUnInstallHook(void)
   if (!started)
   {
     started = true;
-    HANDLE thread_handle = CreateThread(NULL, 0, ::ZcnUnHookThreadProc, 0, 0, NULL);
-    ::Sleep(3000);
-    if (thread_handle)
-      CloseHandle(thread_handle);
+    //HANDLE thread_handle = CreateThread(NULL, 0, ::ZcnUnHookThreadProc, 0, 0, NULL);
+    //::Sleep(1000);
+    //if (thread_handle)
+    //  CloseHandle(thread_handle);
 
   if( global_hook) 
   {
-    global_hook->Destroy();
+   // global_hook->Destroy();
     delete global_hook;
     global_hook = NULL;
   }
@@ -180,22 +180,25 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             ZcnInstallHook();
             //ZcnInstallCallwndHook();
             //
+            //LoadLibrary(path);
             ::MessageBeep(MB_OK);
         }
       }
     }
     break;
     case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
       break;
-    case DLL_PROCESS_DETACH:
+    case DLL_THREAD_DETACH:
       {
         
-        ZcnUnInstallHook();
+        //ZcnUnInstallHook();
         //ZcnUnInstallCallwndHook();
          ::MessageBeep(MB_OK);
       }
       break;
+    case DLL_PROCESS_DETACH:
+        ZcnUnInstallHook();
+        break;
   }
   return ok;
 }
