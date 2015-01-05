@@ -12,7 +12,7 @@
 #include "installhook.h"
 #include "helper.h"
 
-#define HOSTAPP  _T("wptdriver.exe")
+#define HOSTAPP  _T("HookDialogDemox.exe")
 
 HINSTANCE g_hInstance = NULL;
 extern WptHook * global_hook;
@@ -21,6 +21,8 @@ extern "C" {
 __declspec( dllexport ) void ZcnInstallHook(void);
 __declspec( dllexport ) void ZcnUnInstallHook(void);
 __declspec( dllexport ) void WINAPI ZcnSetProxyEnabled(bool enableProxy);
+__declspec( dllexport ) int ZcnInstallCallwndHook(void);
+__declspec( dllexport ) int ZcnUnInstallCallwndHook(void);
 }
 
 void WINAPI ZcnSetProxyEnabled(bool cleared_cache) {
@@ -91,9 +93,9 @@ void ZcnUnInstallHook(void)
 
 
 
-HHOOK global_hCallwndHook = NULL;
 
-LRESULT ZcnCallwndHookProc (
+
+LRESULT CALLBACK ZcnCallwndHookProc (
   int nCode,       // hook code
   WPARAM wParam,  // virtual-key code =
   LPARAM lParam   // keystroke-message information
@@ -101,6 +103,7 @@ LRESULT ZcnCallwndHookProc (
 {
   if (nCode < 0) // do not process message
     return CallNextHookEx(global_hCallwndHook, nCode, wParam, lParam);
+
 
   if (nCode >= HC_ACTION)
   {
@@ -111,6 +114,7 @@ LRESULT ZcnCallwndHookProc (
       do{
       ZcnInstallHook();
       }while(false);
+      ::MessageBeep(MB_OK);
 
     }
     else if( cmsg->message == WM_HOOKEX )
@@ -119,6 +123,7 @@ LRESULT ZcnCallwndHookProc (
       ZcnUnInstallHook();
 
       }while(false);
+      ::MessageBeep(MB_ICONASTERISK);
     }
   }
 
@@ -126,9 +131,9 @@ LRESULT ZcnCallwndHookProc (
 }
 int ZcnInstallCallwndHook( )
 {
-  DWORD id = 0;//GetCurrentProcessId();GetCurrentThreadId
+  DWORD id =GetCurrentThreadId();//0;// //GetCurrentProcessId();//
   global_hCallwndHook = SetWindowsHookEx( WH_CALLWNDPROC,(HOOKPROC)ZcnCallwndHookProc,g_hInstance, id );
-
+  DWORD err = GetLastError();
   return (global_hCallwndHook != NULL);
 }
 int ZcnUnInstallCallwndHook( )
@@ -177,11 +182,12 @@ BOOL APIENTRY DllMain( HMODULE hModule,
           // IE gets instrumented from the BHO so don't start the actual
           // hooking, just let the DLL load
           //if (lstrcmpi(exe, _T("iexplore.exe")))
-            ZcnInstallHook();
+            //ZcnInstallHook();
             //ZcnInstallCallwndHook();
             //
             //LoadLibrary(path);
             ::MessageBeep(MB_OK);
+            //DisableThreadLibraryCalls(hModule);
         }
       }
     }
@@ -197,7 +203,8 @@ BOOL APIENTRY DllMain( HMODULE hModule,
       }
       break;
     case DLL_PROCESS_DETACH:
-        ZcnUnInstallHook();
+        //ZcnUnInstallHook();
+        //ZcnUnInstallCallwndHook();
         break;
   }
   return ok;

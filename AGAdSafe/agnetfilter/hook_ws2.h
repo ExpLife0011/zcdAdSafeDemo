@@ -40,7 +40,7 @@ public:
   void Init();
   void Destroy();
 
-  int  WINAPI connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen);
+  int  WSAAPI connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen);
 private:
   NCodeHookIA32*  hook_;
   CRITICAL_SECTION cs;

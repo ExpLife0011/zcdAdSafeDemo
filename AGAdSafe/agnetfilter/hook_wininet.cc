@@ -84,7 +84,7 @@ HINTERNET __stdcall InternetConnectA_Hook(HINTERNET hInternet, LPCSTR lpszServer
 
 
 CWinInetHook::CWinInetHook(void):
-hookOpenA(true)
+hookOpenA(true),hook_(0)
 {
  WriteAGLog("CWinInetHook");
  InitializeCriticalSection(&cs);

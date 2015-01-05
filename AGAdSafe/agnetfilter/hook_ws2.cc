@@ -50,7 +50,7 @@ static CWs2Hook * g_pWsHook = NULL;
 ******************************************************************************/
 
 
-int WINAPI  AmhConnectHook(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
+int WSAAPI  AmhConnectHook(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
 {
   WriteAGLog("connect_AGHook Begin");
   int ret = SOCKET_ERROR;
@@ -81,30 +81,18 @@ int WINAPI  AmhConnectHook(IN SOCKET s, const struct sockaddr FAR * name, IN int
       if (bMark)
       {
           WriteAGLog(".2A");
+          if( g_pWsHook)
         ret = g_pWsHook->connect(s, name, namelen);
       }
       else
       {
           WriteAGLog(".2B");
+           if( g_pWsHook)
         ret =  g_pWsHook->connect(s, (SOCKADDR*)&stSvrAddrIn/*name*/, sizeof(SOCKADDR)/*namelen*/);
       }
 
       if (SOCKET_ERROR == ret)
       {
-        //DWORD dw = GetLastError();
-        //LPVOID lpMsgBuf;
-//     FormatMessageA(
-//      FORMAT_MESSAGE_ALLOCATE_BUFFER |
-//      FORMAT_MESSAGE_FROM_SYSTEM |
-//      FORMAT_MESSAGE_IGNORE_INSERTS,
-//      NULL,
-//      GetLastError(),
-//      MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-//      (LPSTR) &lpMsgBuf,
-//      0,
-//      NULL
-//      );
-        //WriteAGLog((LPCSTR)lpMsgBuf);
         WriteAGLog("ret==SOCKET_ERROR");
       }
     }
@@ -122,6 +110,7 @@ int WINAPI  AmhConnectHook(IN SOCKET s, const struct sockaddr FAR * name, IN int
 
 ////////////
 CWs2Hook::CWs2Hook()
+  :hook_(0),_connect(0)
 
 {
   InitializeCriticalSection(&cs);
@@ -153,16 +142,18 @@ void CWs2Hook::Destroy(void)
 
 void CWs2Hook::Init()
 {
-  if (!g_pWsHook)
-    g_pWsHook = this;
+  if (g_pWsHook || hook_)
+    return;
+
 
   hook_ = new NCodeHookIA32();
+    g_pWsHook = this;
   // install the code hooks
   _connect = hook_->createHookByName("ws2_32.dll", "connect", AmhConnectHook);
 
 }
 
-int WINAPI CWs2Hook::connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
+int WSAAPI CWs2Hook::connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
 {
   int ret = SOCKET_ERROR;
   WriteAGLog(" CWs2Hook::connect.Begin");

@@ -113,6 +113,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AGUnhandledException.cpp" />
     <ClCompile Include="explorer1.cpp" />
     <ClCompile Include="HookDialogDemo.cpp" />
     <ClCompile Include="HookDialogDemoDlg.cpp" />
@@ -122,6 +123,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AGUnhandledException.h" />
     <ClInclude Include="explorer1.h" />
     <ClInclude Include="HookDialogDemo.h" />
     <ClInclude Include="HookDialogDemoDlg.h" />

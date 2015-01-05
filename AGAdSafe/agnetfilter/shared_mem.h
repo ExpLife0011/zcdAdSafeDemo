@@ -41,7 +41,7 @@ extern int    shared_result;
 extern WCHAR  shared_browser_exe[MAX_PATH];
 extern DWORD  shared_browser_process_id;
 
-
+extern HHOOK global_hCallwndHook;
 
 extern int g_bSubclassed; // START button subclassed?
 extern UINT WM_HOOKEX;

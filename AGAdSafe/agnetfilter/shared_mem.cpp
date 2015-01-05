@@ -46,6 +46,7 @@ HHOOK g_hKbHook = NULL;
 HHOOK g_hCallwndHook = NULL;
 TCHAR GUID_HOOKMSG[_MAX_PATH] = {_T("WM_HOOKEX_RK" )};
 bool shared_proxy_enabled = true;
+HHOOK global_hCallwndHook = NULL;
 
 HHOOK shared_hook_handle = 0;
 WCHAR shared_results_file_base[MAX_PATH] = {NULL};

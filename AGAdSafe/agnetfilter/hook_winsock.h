@@ -93,6 +93,7 @@ public:
 #endif
   virtual ~CWinsockHook(void);
   void Init();
+  void Destroy();
 
   // straight winsock hooks
   SOCKET WSASocketW(int af, int type, int protocol,

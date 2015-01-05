@@ -44,7 +44,8 @@ public:
   void Destroy();
 
 private:
-  CWs2Hook*   winsock_hook_;
+  CWs2Hook*   ws_hook_;
   CWinInetHook* wininet_hook_;
+  CWinsockHook*   winsock_hook_;
 
 };

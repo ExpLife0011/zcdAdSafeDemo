@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define WPTRACK_BEGIN if(false){
 #define WPTRACK_END  }
 
-static CWinsockHook * g_pWsHook = NULL;
+static CWinsockHook * g_pWinsockHook = NULL;
 
 #define TRACE_WINSOCK 1
 #define _USE_HOOKPTR 1
@@ -55,28 +55,28 @@ static CWinsockHook * g_pWsHook = NULL;
 SOCKET WSAAPI WSASocketW_Hook(int af, int type, int protocol,
                   LPWSAPROTOCOL_INFOW lpProtocolInfo, GROUP g, DWORD dwFlags) {
   SOCKET ret = SOCKET_ERROR;
-  if (g_pWsHook)
-    ret = g_pWsHook->WSASocketW(af, type, protocol, lpProtocolInfo, g, dwFlags);
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->WSASocketW(af, type, protocol, lpProtocolInfo, g, dwFlags);
   return ret;
 }
 
 int WSAAPI closesocket_Hook(SOCKET s) {
   int ret = SOCKET_ERROR;
-  if (g_pWsHook)
-    ret = g_pWsHook->closesocket(s);
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->closesocket(s);
   return ret;
 }
 
 int WSAAPI connect_Hook(IN SOCKET s, const struct sockaddr FAR * name,
                                                               IN int namelen) {
   //int ret = SOCKET_ERROR;
-  //if (g_pWsHook)
-  //  ret = g_pWsHook->connect(s, name, namelen);
+  //if (g_pWinsockHook)
+  //  ret = g_pWinsockHook->connect(s, name, namelen);
 
   WriteAGLog("connect_AGHook Begin");
   int ret = SOCKET_ERROR;
   __try{
-    if(g_pWsHook)
+    if(g_pWinsockHook)
     {
       WriteAGLog("...");
       BOOL bMark = FALSE;
@@ -98,11 +98,11 @@ int WSAAPI connect_Hook(IN SOCKET s, const struct sockaddr FAR * name,
       if (bMark)
       {
 
-        ret = g_pWsHook->connect(s, name, namelen);
+        ret = g_pWinsockHook->connect(s, name, namelen);
       }
       else
       {
-        ret = g_pWsHook->connect(s, (SOCKADDR*)&stSvrAddrIn/*name*/, sizeof(SOCKADDR)/*namelen*/);
+        ret = g_pWinsockHook->connect(s, (SOCKADDR*)&stSvrAddrIn/*name*/, sizeof(SOCKADDR)/*namelen*/);
       }
 
       if (SOCKET_ERROR == ret)
@@ -122,14 +122,14 @@ BOOL PASCAL ConnectEx_Hook(SOCKET s, const struct sockaddr FAR *name,
     LPDWORD lpdwBytesSent, LPOVERLAPPED lpOverlapped)
 {
   //BOOL ret = FALSE;
-  //if (g_pWsHook)
-  //  g_pWsHook->ConnectEx(s, name, namelen, lpSendBuffer, dwSendDataLength,
+  //if (g_pWinsockHook)
+  //  g_pWinsockHook->ConnectEx(s, name, namelen, lpSendBuffer, dwSendDataLength,
   //                   lpdwBytesSent, lpOverlapped);
 
   WriteAGLog("connectEx_AGHook Begin");
   BOOL ret = FALSE;
   __try{
-    if(g_pWsHook)
+    if(g_pWinsockHook)
     {
 
       BOOL bMark = FALSE;
@@ -139,12 +139,12 @@ BOOL PASCAL ConnectEx_Hook(SOCKET s, const struct sockaddr FAR *name,
       stSvrAddrIn.sin_addr.s_addr = inet_addr("127.0.0.1");
       if (bMark)
       {
-          g_pWsHook->ConnectEx(s, name, namelen, lpSendBuffer, dwSendDataLength,
+          g_pWinsockHook->ConnectEx(s, name, namelen, lpSendBuffer, dwSendDataLength,
                      lpdwBytesSent, lpOverlapped);
       }
       else
       {
-          g_pWsHook->ConnectEx(s,(SOCKADDR*)&stSvrAddrIn/*name*/, sizeof(SOCKADDR)/*namelen*/
+          g_pWinsockHook->ConnectEx(s,(SOCKADDR*)&stSvrAddrIn/*name*/, sizeof(SOCKADDR)/*namelen*/
                   , lpSendBuffer, dwSendDataLength, lpdwBytesSent, lpOverlapped);
       }
 
@@ -163,31 +163,31 @@ BOOL PASCAL ConnectEx_Hook(SOCKET s, const struct sockaddr FAR *name,
 
 int WSAAPI recv_Hook(SOCKET s, char FAR * buf, int len, int flags) {
   int ret = SOCKET_ERROR;
-  if (g_pWsHook)
-    ret = g_pWsHook->recv(s, buf, len, flags);
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->recv(s, buf, len, flags);
   return ret;
 }
 
 int WSAAPI select_Hook(int nfds, fd_set FAR * readfds, fd_set FAR * writefds,
               fd_set FAR * exceptfds, const struct timeval FAR * timeout) {
   int ret = SOCKET_ERROR;
-  if (g_pWsHook)
-    ret = g_pWsHook->select(nfds, readfds, writefds, exceptfds, timeout);
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->select(nfds, readfds, writefds, exceptfds, timeout);
   return ret;
 }
 
 int WSAAPI send_Hook(SOCKET s, const char FAR * buf, int len, int flags) {
   int ret = SOCKET_ERROR;
-  if (g_pWsHook)
-    ret = g_pWsHook->send(s, buf, len, flags);
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->send(s, buf, len, flags);
   return ret;
 }
 
 int WSAAPI getaddrinfo_Hook(PCSTR pNodeName, PCSTR pServiceName,
                             const ADDRINFOA * pHints, PADDRINFOA * ppResult) {
   int ret = WSAEINVAL;
-  if (g_pWsHook)
-    ret = g_pWsHook->getaddrinfo(pNodeName, pServiceName,
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->getaddrinfo(pNodeName, pServiceName,
                              (ADDRINFOA *)pHints, ppResult);
   return ret;
 }
@@ -195,16 +195,16 @@ int WSAAPI getaddrinfo_Hook(PCSTR pNodeName, PCSTR pServiceName,
 int WSAAPI GetAddrInfoW_Hook(PCWSTR pNodeName, PCWSTR pServiceName,
                              const ADDRINFOW * pHints, PADDRINFOW * ppResult) {
   int ret = WSAEINVAL;
-  if (g_pWsHook)
-    ret = g_pWsHook->GetAddrInfoW(pNodeName, pServiceName,
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->GetAddrInfoW(pNodeName, pServiceName,
                               (ADDRINFOW *)pHints, ppResult);
   return ret;
 }
 
 struct hostent * WSAAPI gethostbyname_Hook(const char * name) {
   struct hostent * ret = NULL;
-  if (g_pWsHook)
-    ret = g_pWsHook->gethostbyname(name);
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->gethostbyname(name);
   return ret;
 }
 
@@ -213,8 +213,8 @@ int WSAAPI WSARecv_Hook(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                         LPWSAOVERLAPPED lpOverlapped,
                       LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
   int ret = SOCKET_ERROR;
-  if (g_pWsHook)
-    ret = g_pWsHook->WSARecv(s, lpBuffers, dwBufferCount, lpNumberOfBytesRecvd,
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->WSARecv(s, lpBuffers, dwBufferCount, lpNumberOfBytesRecvd,
                                   lpFlags, lpOverlapped, lpCompletionRoutine);
   return ret;
 }
@@ -224,8 +224,8 @@ int WSAAPI WSASend_Hook(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
               LPWSAOVERLAPPED lpOverlapped,
               LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
   int ret = SOCKET_ERROR;
-  if (g_pWsHook)
-    ret = g_pWsHook->WSASend(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent,
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->WSASend(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent,
                           dwFlags, lpOverlapped, lpCompletionRoutine);
   return ret;
 }
@@ -233,8 +233,8 @@ int WSAAPI WSASend_Hook(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 BOOL WSAAPI WSAGetOverlappedResult_Hook(SOCKET s, LPWSAOVERLAPPED lpOverlapped,
               LPDWORD lpcbTransfer, BOOL fWait, LPDWORD lpdwFlags) {
   BOOL ret = FALSE;
-  if (g_pWsHook)
-    ret = g_pWsHook->WSAGetOverlappedResult(s, lpOverlapped, lpcbTransfer, fWait,
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->WSAGetOverlappedResult(s, lpOverlapped, lpcbTransfer, fWait,
                                         lpdwFlags);
   return ret;
 }
@@ -242,16 +242,16 @@ BOOL WSAAPI WSAGetOverlappedResult_Hook(SOCKET s, LPWSAOVERLAPPED lpOverlapped,
 int WSAAPI WSAEventSelect_Hook(SOCKET s, WSAEVENT hEventObject,
                                 long lNetworkEvents) {
   int ret = SOCKET_ERROR;
-  if (g_pWsHook)
-    ret = g_pWsHook->WSAEventSelect(s, hEventObject, lNetworkEvents);
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->WSAEventSelect(s, hEventObject, lNetworkEvents);
   return ret;
 }
 
 int WSAAPI WSAEnumNetworkEvents_Hook(SOCKET s, WSAEVENT hEventObject,
                             LPWSANETWORKEVENTS lpNetworkEvents) {
   int ret = SOCKET_ERROR;
-  if (g_pWsHook)
-    ret = g_pWsHook->WSAEnumNetworkEvents(s, hEventObject, lpNetworkEvents);
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->WSAEnumNetworkEvents(s, hEventObject, lpNetworkEvents);
   return ret;
 }
 
@@ -261,8 +261,8 @@ int WSAAPI GetAddrInfoExA_Hook(PCSTR pName, PCSTR pServiceName, DWORD dwNameSpac
     LPLOOKUPSERVICE_COMPLETION_ROUTINE lpCompletionRoutine,
     LPHANDLE lpNameHandle) {
   int ret = EAI_FAIL;
-  if (g_pWsHook)
-    ret = g_pWsHook->GetAddrInfoExA(pName, pServiceName, dwNameSpace, lpNspId,
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->GetAddrInfoExA(pName, pServiceName, dwNameSpace, lpNspId,
         (ADDRINFOEXA *)hints, ppResult, timeout, lpOverlapped,
         lpCompletionRoutine, lpNameHandle);
   return ret;
@@ -274,8 +274,8 @@ int WSAAPI GetAddrInfoExW_Hook(PCWSTR pName, PCWSTR pServiceName, DWORD dwNameSp
     LPLOOKUPSERVICE_COMPLETION_ROUTINE lpCompletionRoutine,
     LPHANDLE lpHandle) {
   int ret = EAI_FAIL;
-  if (g_pWsHook)
-    ret = g_pWsHook->GetAddrInfoExW(pName, pServiceName, dwNameSpace, lpNspId,
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->GetAddrInfoExW(pName, pServiceName, dwNameSpace, lpNspId,
         (ADDRINFOEXW *)hints, ppResult, timeout, lpOverlapped,
         lpCompletionRoutine, lpHandle);
   return ret;
@@ -284,37 +284,37 @@ int WSAAPI GetAddrInfoExW_Hook(PCWSTR pName, PCWSTR pServiceName, DWORD dwNameSp
 PTP_IO WINAPI CreateThreadpoolIo_Hook(HANDLE fl,
     PTP_WIN32_IO_CALLBACK_WPT pfnio, PVOID pv, PTP_CALLBACK_ENVIRON pcbe) {
   PTP_IO ret = NULL;
-  if (g_pWsHook)
-    ret = g_pWsHook->CreateThreadpoolIo(fl, pfnio, pv, pcbe, false);
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->CreateThreadpoolIo(fl, pfnio, pv, pcbe, false);
   return ret;
 }
 
 PTP_IO WINAPI CreateThreadpoolIo_base_Hook(HANDLE fl,
     PTP_WIN32_IO_CALLBACK_WPT pfnio, PVOID pv, PTP_CALLBACK_ENVIRON pcbe) {
   PTP_IO ret = NULL;
-  if (g_pWsHook)
-    ret = g_pWsHook->CreateThreadpoolIo(fl, pfnio, pv, pcbe, true);
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->CreateThreadpoolIo(fl, pfnio, pv, pcbe, true);
   return ret;
 }
 
 void WINAPI CloseThreadpoolIo_Hook(PTP_IO pio) {
-  if (g_pWsHook)
-    g_pWsHook->CloseThreadpoolIo(pio, false);
+  if (g_pWinsockHook)
+    g_pWinsockHook->CloseThreadpoolIo(pio, false);
 }
 
 void WINAPI CloseThreadpoolIo_base_Hook(PTP_IO pio) {
-  if (g_pWsHook)
-    g_pWsHook->CloseThreadpoolIo(pio, true);
+  if (g_pWinsockHook)
+    g_pWinsockHook->CloseThreadpoolIo(pio, true);
 }
 
 void WINAPI StartThreadpoolIo_Hook(PTP_IO pio) {
-  if (g_pWsHook)
-    g_pWsHook->StartThreadpoolIo(pio, false);
+  if (g_pWinsockHook)
+    g_pWinsockHook->StartThreadpoolIo(pio, false);
 }
 
 void WINAPI StartThreadpoolIo_base_Hook(PTP_IO pio) {
-  if (g_pWsHook)
-    g_pWsHook->StartThreadpoolIo(pio, true);
+  if (g_pWinsockHook)
+    g_pWinsockHook->StartThreadpoolIo(pio, true);
 }
 
 int WSAAPI WSAIoctl_Hook(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
@@ -322,8 +322,8 @@ int WSAAPI WSAIoctl_Hook(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
   LPDWORD lpcbBytesReturned, LPWSAOVERLAPPED lpOverlapped,
   LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
   int ret = SOCKET_ERROR;
-  if (g_pWsHook)
-    ret = g_pWsHook->WSAIoctl(s, dwIoControlCode, lpvInBuffer, cbInBuffer,
+  if (g_pWinsockHook)
+    ret = g_pWinsockHook->WSAIoctl(s, dwIoControlCode, lpvInBuffer, cbInBuffer,
                           lpvOutBuffer, cbOutBuffer, lpcbBytesReturned,
                           lpOverlapped, lpCompletionRoutine);
   return ret;
@@ -371,9 +371,9 @@ CWinsockHook::CWinsockHook(
 -----------------------------------------------------------------------------*/
 void CWinsockHook::Init()
 {
-  if( g_pWsHook ) return;
-  if (!g_pWsHook)
-    g_pWsHook = this;
+  if( g_pWinsockHook ) return;
+  if (!g_pWinsockHook)
+    g_pWinsockHook = this;
 
 
 #if _USE_HOOKPTR
@@ -471,12 +471,31 @@ void CWinsockHook::Init()
 #endif
 }
 
+void CWinsockHook::Destroy()
+{
+  if( g_pWinsockHook == this )
+    g_pWinsockHook = NULL;
+
+#ifdef ENABLE_WPTRACE
+  EnterCriticalSection(&cs);
+  _send_buffers.RemoveAll();
+  _send_buffer_original_length.RemoveAll();
+  LeaveCriticalSection(&cs);
+#endif
+
+#if _USE_HOOKPTR
+    if (_hook)
+    delete _hook;  // remove all the hooks
+
+    _hook = NULL;
+#endif
+}
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
 CWinsockHook::~CWinsockHook(void)
 {
-  if( g_pWsHook == this )
-    g_pWsHook = NULL;
+  if( g_pWinsockHook == this )
+    g_pWinsockHook = NULL;
 
 #ifdef ENABLE_WPTRACE
   EnterCriticalSection(&cs);
@@ -1162,8 +1181,8 @@ int CWinsockHook::GetAddrInfoExW(PCWSTR pName, PCWSTR pServiceName, DWORD dwName
 VOID WINAPI ThreadpoolCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context,
     PVOID Overlapped, ULONG IoResult, ULONG_PTR NumberOfBytesTransferred,
     PTP_IO Io) {
-  if (g_pWsHook)
-    g_pWsHook->ThreadpoolCallback(Instance, Context, Overlapped, IoResult,
+  if (g_pWinsockHook)
+    g_pWinsockHook->ThreadpoolCallback(Instance, Context, Overlapped, IoResult,
                               NumberOfBytesTransferred, Io);
 }
 

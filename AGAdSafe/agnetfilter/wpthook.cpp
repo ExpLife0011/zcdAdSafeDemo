@@ -40,12 +40,12 @@ extern HINSTANCE global_dll_handle;
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
 WptHook::WptHook(void):
-  winsock_hook_(0)
-  ,wininet_hook_(0)
+  ws_hook_(0)
+  ,wininet_hook_(0),winsock_hook_(0)
 {
-  winsock_hook_ = new CWs2Hook;
+  ws_hook_ = new CWs2Hook;
   wininet_hook_ = new CWinInetHook;
-
+  winsock_hook_ = new CWinsockHook;
 
 }
 
@@ -53,15 +53,20 @@ WptHook::WptHook(void):
 -----------------------------------------------------------------------------*/
 WptHook::~WptHook(void)
 {
-    if( winsock_hook_)
+    if( ws_hook_)
     {
-        delete winsock_hook_;
-        winsock_hook_ = NULL;
+        delete ws_hook_;
+        ws_hook_ = NULL;
     }
     if( wininet_hook_)
     {
         delete wininet_hook_;
         wininet_hook_ = NULL;
+    }
+    if( winsock_hook_)
+    {
+        delete winsock_hook_;
+        winsock_hook_ = NULL;
     }
 }
 
@@ -69,12 +74,14 @@ WptHook::~WptHook(void)
 -----------------------------------------------------------------------------*/
 void WptHook::Init()
 {
-    if(winsock_hook_) winsock_hook_->Init();
+    if(ws_hook_) ws_hook_->Init();
     if(wininet_hook_) wininet_hook_->Init();
+    if(winsock_hook_) winsock_hook_->Init();
 }
 
 void WptHook::Destroy()
 {
-    if(winsock_hook_) winsock_hook_->Destroy();
+    if(ws_hook_) ws_hook_->Destroy();
     if(wininet_hook_) wininet_hook_->Destroy();
+    if(winsock_hook_) winsock_hook_->Destroy();
 }
