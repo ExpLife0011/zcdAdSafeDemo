@@ -30,9 +30,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
 #include "stdafx.h"
-#include "shared_mem.h"
+//#include "shared_mem.h"
 #include "wpthook.h"
 
+//#define WriteAGLog(x) 
+
+#include "hook_winsock.cc"
+#include "hook_wininet.cc"
+#include "hook_ws2.cc"
 WptHook * global_hook = NULL;
 extern HINSTANCE global_dll_handle;
 
@@ -44,8 +49,8 @@ WptHook::WptHook(void):
   ,wininet_hook_(0),winsock_hook_(0)
 {
   ws_hook_ = new CWs2Hook;
-  wininet_hook_ = new CWinInetHook;
-  winsock_hook_ = new CWinsockHook;
+  //wininet_hook_ = new CWinInetHook;
+  //winsock_hook_ = new CWinsockHook;
 
 }
 

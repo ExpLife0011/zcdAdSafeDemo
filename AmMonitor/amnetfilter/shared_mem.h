@@ -44,10 +44,13 @@ extern DWORD  shared_browser_process_id;
 extern HHOOK global_hCallwndHook;
 
 extern int g_bSubclassed; // START button subclassed?
-extern UINT WM_HOOKEX;
 extern HWND g_hWnd;  // handle of START button
 extern HHOOK g_hKbHook;
 extern HHOOK g_hCallwndHook ;
-extern TCHAR GUID_HOOKMSG[_MAX_PATH] ;
+
+extern UINT WM_AMMONITOR;
+extern UINT WM_AMMONITORRET;
+extern TCHAR const GUID_HOOKMSG[_MAX_PATH] ;
+extern TCHAR const GUID_HOOKMSGRET[_MAX_PATH] ;
 
 extern bool shared_proxy_enabled ;

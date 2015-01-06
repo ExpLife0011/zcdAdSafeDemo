@@ -28,8 +28,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include "hook_winsock.h"
-//#include "hook_nspr.h"
-//#include "hook_schannel.h"
 #include "hook_wininet.h"
 #include "hook_ws2.h"
 

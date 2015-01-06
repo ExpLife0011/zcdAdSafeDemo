@@ -39,6 +39,12 @@
     <ClCompile Include="wpthook.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="util.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="shared_mem.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -57,6 +63,12 @@
       <Filter>3rd Party\NCodeHook</Filter>
     </ClInclude>
     <ClInclude Include="wpthook.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="shared_mem.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

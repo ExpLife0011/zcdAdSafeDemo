@@ -284,3 +284,29 @@ DWORD KGEnumProcEjectLibraryIE(LPCTSTR lpcszPath)
   return 0;
 
 }
+
+
+BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) 
+{ 
+    DWORD dwCurProcessId = *((DWORD*)lParam); 
+    DWORD dwProcessId = 0; 
+ 
+    GetWindowThreadProcessId(hwnd, &dwProcessId); 
+    if(dwProcessId == dwCurProcessId && GetParent(hwnd) == NULL)
+    { 
+        *((HWND *)lParam) = hwnd;
+        return FALSE; 
+    } 
+    return TRUE; 
+} 
+ 
+ 
+HWND GetMainWindow(DWORD pid) 
+{ 
+    DWORD dwCurrentProcessId = pid;
+    if(!EnumWindows(EnumWindowsProc, (LPARAM)&dwCurrentProcessId)) 
+    {     
+        return (HWND)dwCurrentProcessId; 
+    } 
+    return NULL; 
+} 

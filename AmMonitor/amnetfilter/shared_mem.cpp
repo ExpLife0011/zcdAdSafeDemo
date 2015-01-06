@@ -39,13 +39,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //   into "explorer.exe" as well as by the instance
 //   of "HookInjEx.dll" mapped into our "HookInjEx.exe"
 #pragma data_seg (".SharedDataName")
+
+UINT WM_AMMONITOR = 0;
+const TCHAR GUID_HOOKMSG[_MAX_PATH] = {_T("WM_AMMONITOR_RK" )};
+UINT WM_AMMONITORRET = 0;
+const TCHAR GUID_HOOKMSGRET[_MAX_PATH] = {_T("WM_AMMONITOR_RET" )};
+
 int  g_bSubclassed = 0; // START button subclassed?
-UINT WM_HOOKEX = 0;
 HWND g_hWnd = 0;  // handle of START button
 HHOOK g_hKbHook = NULL;
-HHOOK g_hCallwndHook = NULL;
-TCHAR GUID_HOOKMSG[_MAX_PATH] = {_T("WM_HOOKEX_RK" )};
 bool shared_proxy_enabled = true;
+
 HHOOK global_hCallwndHook = NULL;
 
 HHOOK shared_hook_handle = 0;

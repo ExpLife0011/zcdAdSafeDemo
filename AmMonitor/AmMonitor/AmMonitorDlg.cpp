@@ -188,19 +188,24 @@ void CAmMonitorDlg::OnBnClickedButtonFree()
 typedef int (*INSTALL)(HWND handle,HWND host);
 typedef int (*UNINSTALL)();
  HWND hNotepad =NULL;
-void CAmMonitorDlg::OnBnClickedButtonHook()
+ //CString findWindClassName = _T("");
+ LPCTSTR findWindowTitle=NULL;
+ LPCTSTR findWindClassName = _T("Chrome_WidgetWin_1");
+ //CString findWindowTitle=_T("HookDialogDemo");
+ 
+ void CAmMonitorDlg::OnBnClickedButtonHook()
 {
   // TODO: 在此添加控件通知处理程序代码
   INSTALL func = NULL;
   func=(INSTALL)::GetProcAddress (g_hFilterInst,"ZcnInstallCallwndHook");
   if(func)
   {
-    hNotepad =  ::FindWindow(NULL,_T("AgAdsafeDemo"));
+    hNotepad =  ::FindWindow(findWindClassName,findWindowTitle);
       //func(m_hWnd,m_hWnd);
       func(hNotepad,m_hWnd);
   }
-  PostThreadMessage(::GetWindowThreadProcessId(hNotepad,NULL)
-   , WM_USER+00,(LPARAM)GetCurrentThreadId(),0);
+  //PostThreadMessage(::GetWindowThreadProcessId(hNotepad,NULL)
+  // , WM_USER+00,(LPARAM)GetCurrentThreadId(),0);
 }
 
 
@@ -217,19 +222,30 @@ void CAmMonitorDlg::OnBnClickedButtonUnhook()
 void CAmMonitorDlg::OnBnClickedButtonInstall()
 {
   // TODO: 在此添加控件通知处理程序代码
-  hNotepad =  ::FindWindow(NULL,_T("AgAdsafeDemo"));
+  hNotepad =  ::FindWindow(findWindClassName,findWindowTitle);
   UINT WM_HOOKEX = ::RegisterWindowMessage(_T("WM_AMMONITOR_RK" ));
     ::SendMessage(hNotepad,WM_HOOKEX,1,1);
-  //DWORD idTarget = ::GetWindowThreadProcessId(hNotepad,NULL);
+    //::SendMessage(HWND_BROADCAST,WM_HOOKEX,1,1);
+  //DWORD idProc = 0;
+  //DWORD idTarget = ::GetWindowThreadProcessId(hNotepad,&idProc);
+
   //PostThreadMessage(idTarget,WM_HOOKEX,0,1);
+  //DWORD dw = GetLastError();
+
 }
 
 
 void CAmMonitorDlg::OnBnClickedButtonUninstall()
 {
   // TODO: 在此添加控件通知处理程序代码
+  hNotepad =  ::FindWindow(findWindClassName,findWindowTitle);
   UINT WM_HOOKEX = ::RegisterWindowMessage(_T("WM_AMMONITOR_RK" ));
     ::SendMessage(hNotepad,WM_HOOKEX,1,0);
+    //::PostMessage(HWND_BROADCAST,WM_HOOKEX,1,1);
+  //DWORD idProc = 0;
+  //DWORD idTarget = ::GetWindowThreadProcessId(hNotepad,&idProc);
+
+  //PostThreadMessage(idProc,WM_HOOKEX,0,0);
 }
 
 

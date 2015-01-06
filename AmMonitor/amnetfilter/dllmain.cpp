@@ -3,20 +3,16 @@
 
 #include <Windows.h>
 #include <tchar.h>
-
+#include "shared_mem.h"
 #include "wpthook.h"
 extern WptHook * global_hook;
 
 const TCHAR szApp[] = _T("DllPart.dll");
 
 HINSTANCE g_hInstance = NULL;
-HHOOK global_hCallwndHook = NULL;
+//HHOOK global_hCallwndHook = NULL;
 HWND global_target = NULL;
 HWND global_host = NULL;
-UINT WM_AMMONITOR = 0;
-const TCHAR GUID_HOOKMSG[_MAX_PATH] = {_T("WM_AMMONITOR_RK" )};
-UINT WM_AMMONITORRET = 0;
-const TCHAR GUID_HOOKMSGRET[_MAX_PATH] = {_T("WM_AMMONITOR_RET" )};
 
 extern "C" {
 __declspec( dllexport ) void ZcnInstallHook(void);
@@ -28,11 +24,13 @@ __declspec( dllexport ) int ZcnUnInstallCallwndHook(void);
 
 void ZcnInstallHook(void)
 {
-  static bool started = false;
+  //static bool started = false;
   //if (!started)
-  {
-    started = true;
     for(int i=0;i<3;i++) ::MessageBeep(MB_ICONEXCLAMATION);
+  if(!shared_has_gpu)
+  {
+    //started = true;
+    shared_has_gpu  = true;
 
     // actually do the startup work
     global_hook = new WptHook;
@@ -44,11 +42,13 @@ void ZcnInstallHook(void)
 
 void ZcnUnInstallHook(void)
 {
-  static bool started = false;
+  //static bool started = false;
   //if (!started)
-  {
-    started = true;
     for(int i=0;i<3;i++) ::MessageBeep(MB_ICONASTERISK);
+  if(shared_has_gpu)
+  {
+    shared_has_gpu = false;
+    //started = true;
 
   if( global_hook) 
   {
@@ -80,26 +80,27 @@ LRESULT CALLBACK ZcnCallwndHookProc (
   {
     LPMSG msg = (LPMSG)lParam;
     LPCWPSTRUCT cmsg = (LPCWPSTRUCT)lParam;
+    ::MessageBeep(MB_ICONQUESTION);
     if (cmsg->message == WM_AMMONITOR && (cmsg->lParam==1) )
     {
-      do{
+     // do{
         TCHAR lib_name[MAX_PATH]; 
         ::GetModuleFileName( g_hInstance, lib_name, MAX_PATH );
 						
-        if( !::LoadLibrary( lib_name ) )
+        //if( !::LoadLibrary( lib_name ) )
 	        ;
         
         ZcnInstallHook();
-      }while(false);
-      ::MessageBeep(MB_OK);
+      //}while(false);
+      ::MessageBeep(MB_ICONEXCLAMATION);
 
     }
     else if( cmsg->message == WM_AMMONITOR  && (cmsg->lParam == 0))
     {
-      do{
+      //do{
       ZcnUnInstallHook();
-      ::FreeLibrary( g_hInstance );
-      }while(false);
+      //::FreeLibrary( g_hInstance );
+      //}while(false);
       ::MessageBeep(MB_ICONASTERISK);
     }
   }

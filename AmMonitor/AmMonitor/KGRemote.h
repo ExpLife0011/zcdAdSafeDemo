@@ -17,4 +17,4 @@ DWORD KGEnumProcEjectLibrary(LPCTSTR lpcszPath);
 
 DWORD KGEnumProcInjectLibraryIE(LPCTSTR lpcszPath);
 DWORD KGEnumProcEjectLibraryIE(LPCTSTR lpcszPath);
-
+HWND GetMainWindow(DWORD pid) ;
