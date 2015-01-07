@@ -25,7 +25,8 @@ public:
   CWinHttpHook(void);
   virtual ~CWinHttpHook(void);
   void Init(void);
-
+  void Destroy(void);
+  
   HINTERNET WinHttpOpenW(LPCWSTR lpszAgent, DWORD dwAccessType, LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags);
   HINTERNET WinHttpOpenA(LPCSTR lpszAgent, DWORD dwAccessType, LPCSTR lpszProxy, LPCSTR lpszProxyBypass, DWORD dwFlags);
   HINTERNET WinHttpConnectW(HINTERNET hSession, LPCWSTR lpszServerName, INTERNET_PORT nServerPort, DWORD dwReserved);

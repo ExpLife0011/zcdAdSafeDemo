@@ -43,7 +43,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static CWinsockHook * g_pWinsockHook = NULL;
 
 #define TRACE_WINSOCK 1
-#define _USE_HOOKPTR 1
 /******************************************************************************
 *******************************************************************************
 **															                                    				 **
@@ -371,13 +370,12 @@ CWinsockHook::CWinsockHook(
 -----------------------------------------------------------------------------*/
 void CWinsockHook::Init()
 {
-  if( g_pWinsockHook ) return;
-  if (!g_pWinsockHook)
+  if (g_pWinsockHook || _hook)
+    return;
+  
+  _hook = new NCodeHookIA32();
     g_pWinsockHook = this;
 
-
-#if _USE_HOOKPTR
-  _hook = new NCodeHookIA32();
     // install the code hooks
   _WSASocketW = _hook->createHookByName("ws2_32.dll", "WSASocketW",
                                       WSASocketW_Hook);
@@ -422,59 +420,10 @@ void CWinsockHook::Init()
     _getaddrinfo = _hook->createHookByName("ws2_32.dll", "getaddrinfo",
                                          getaddrinfo_Hook);
 
-#else
-
-
-  // install the code hooks
-  _WSASocketW = hook.createHookByName("ws2_32.dll", "WSASocketW",
-                                      WSASocketW_Hook);
-  _closesocket = hook.createHookByName("ws2_32.dll", "closesocket",
-                                       closesocket_Hook);
-  _connect = hook.createHookByName("ws2_32.dll", "connect", connect_Hook);
-  _recv = hook.createHookByName("ws2_32.dll", "recv", recv_Hook);
-  _send = hook.createHookByName("ws2_32.dll", "send", send_Hook);
-  _select = hook.createHookByName("ws2_32.dll", "select", select_Hook);
-  _GetAddrInfoW = hook.createHookByName("ws2_32.dll", "GetAddrInfoW",
-                                        GetAddrInfoW_Hook);
-  _gethostbyname = hook.createHookByName("ws2_32.dll", "gethostbyname",
-                                         gethostbyname_Hook);
-  _GetAddrInfoExA = hook.createHookByName("ws2_32.dll", "GetAddrInfoExA",
-                                          GetAddrInfoExA_Hook);
-  _GetAddrInfoExW = hook.createHookByName("ws2_32.dll", "GetAddrInfoExW",
-                                          GetAddrInfoExW_Hook);
-  _WSARecv = hook.createHookByName("ws2_32.dll", "WSARecv", WSARecv_Hook);
-  _WSASend = hook.createHookByName("ws2_32.dll", "WSASend", WSASend_Hook);
-  _WSAGetOverlappedResult = hook.createHookByName("ws2_32.dll",
-      "WSAGetOverlappedResult", WSAGetOverlappedResult_Hook);
-  _WSAEventSelect = hook.createHookByName("ws2_32.dll", "WSAEventSelect",
-                                          WSAEventSelect_Hook);
-  _WSAEnumNetworkEvents = hook.createHookByName("ws2_32.dll",
-      "WSAEnumNetworkEvents", WSAEnumNetworkEvents_Hook);
-  _CreateThreadpoolIo = hook.createHookByName("kernel32.dll",
-      "CreateThreadpoolIo", CreateThreadpoolIo_Hook);
-  _CreateThreadpoolIo_base = hook.createHookByName("kernelbase.dll",
-      "CreateThreadpoolIo", CreateThreadpoolIo_base_Hook);
-  _CloseThreadpoolIo = hook.createHookByName("kernelbase.dll",
-      "CloseThreadpoolIo", CloseThreadpoolIo_Hook);
-  _CloseThreadpoolIo_base = hook.createHookByName("kernel32.dll",
-      "CloseThreadpoolIo", CloseThreadpoolIo_base_Hook);
-  _StartThreadpoolIo = hook.createHookByName("kernelbase.dll",
-      "StartThreadpoolIo", StartThreadpoolIo_Hook);
-  _StartThreadpoolIo_base = hook.createHookByName("kernel32.dll",
-      "StartThreadpoolIo", StartThreadpoolIo_base_Hook);
-  _WSAIoctl = hook.createHookByName("ws2_32.dll", "WSAIoctl", WSAIoctl_Hook);
-
-  // only hook the A version if the W version wasn't present (XP SP1 or below)
-  if (!_GetAddrInfoW)
-    _getaddrinfo = hook.createHookByName("ws2_32.dll", "getaddrinfo",
-                                         getaddrinfo_Hook);
-#endif
 }
 
 void CWinsockHook::Destroy()
 {
-  if( g_pWinsockHook == this )
-    g_pWinsockHook = NULL;
 
 #ifdef ENABLE_WPTRACE
   EnterCriticalSection(&cs);
@@ -483,32 +432,27 @@ void CWinsockHook::Destroy()
   LeaveCriticalSection(&cs);
 #endif
 
-#if _USE_HOOKPTR
     if (_hook)
-    delete _hook;  // remove all the hooks
-
+    {
+     delete _hook;  // remove all the hooks
     _hook = NULL;
-#endif
+    }
 }
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
 CWinsockHook::~CWinsockHook(void)
 {
   if( g_pWinsockHook == this )
+  {
     g_pWinsockHook = NULL;
+        Destroy();
+  }
 
 #ifdef ENABLE_WPTRACE
   EnterCriticalSection(&cs);
   _send_buffers.RemoveAll();
   _send_buffer_original_length.RemoveAll();
   LeaveCriticalSection(&cs);
-#endif
-
-#if _USE_HOOKPTR
-    if (_hook)
-    delete _hook;  // remove all the hooks
-
-    _hook = NULL;
 #endif
   DeleteCriticalSection(&cs);
 }

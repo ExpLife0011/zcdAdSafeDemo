@@ -31,13 +31,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "StdAfx.h"
 #include "hook_ws2.h"
 #include "util.h"
-#include "shared_mem.h"
+//#include "shared_mem.h"
 
 #pragma comment(lib, "ws2_32.lib")
 #define INCL_WINSOCK_API_TYPEDEFS 1
-//#include <windows.h>
 #include <WinSock2.h>
-//#include <ws2tcpip.h>
 
 static CWs2Hook * g_pWsHook = NULL;
 
@@ -50,8 +48,14 @@ static CWs2Hook * g_pWsHook = NULL;
 ******************************************************************************/
 
 
-int WSAAPI  AmhConnectHook(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
+static int WSAAPI  AmhConnectHook(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
 {
+
+//int ret = SOCKET_ERROR;
+//if (g_pWsHook)
+//  ret = g_pWsHook->connect(s, name, namelen);
+//  return ret;
+
   WriteAGLog("connect_AGHook Begin");
   int ret = SOCKET_ERROR;
   __try{
@@ -81,13 +85,11 @@ int WSAAPI  AmhConnectHook(IN SOCKET s, const struct sockaddr FAR * name, IN int
       if (bMark)
       {
           WriteAGLog(".2A");
-          if( g_pWsHook)
         ret = g_pWsHook->connect(s, name, namelen);
       }
       else
       {
           WriteAGLog(".2B");
-           if( g_pWsHook)
         ret =  g_pWsHook->connect(s, (SOCKADDR*)&stSvrAddrIn/*name*/, sizeof(SOCKADDR)/*namelen*/);
       }
 
@@ -113,25 +115,28 @@ CWs2Hook::CWs2Hook()
   :hook_(0),_connect(0)
 
 {
+  WriteAGLog("CWs2Hook::CWs2Hook");
   InitializeCriticalSection(&cs);
 
 }
 
 CWs2Hook::~CWs2Hook()
 {
-  if (g_pWsHook == this)
+WriteAGLog("CWs2Hook::~CWs2Hook");
+if (g_pWsHook == this)
   {
     g_pWsHook = NULL;
     //hook.removeHook(_connect);
     Destroy();
-    _connect = NULL;
+    //_connect = NULL;
   }
 
   DeleteCriticalSection(&cs);
 }
 void CWs2Hook::Destroy(void)
 {
-    if( hook_)
+WriteAGLog("CWs2Hook::Destroy");
+if( hook_)
     {
   delete hook_;
   hook_ = NULL;
@@ -142,18 +147,24 @@ void CWs2Hook::Destroy(void)
 
 void CWs2Hook::Init()
 {
-  if (g_pWsHook || hook_)
+WriteAGLog("CWs2Hook::Init");
+if (g_pWsHook || hook_)
     return;
 
 
   hook_ = new NCodeHookIA32();
-    g_pWsHook = this;
+  g_pWsHook = this;
+  WriteAGLog("CWs2Hook::createHookByName");
   // install the code hooks
   _connect = hook_->createHookByName("ws2_32.dll", "connect", AmhConnectHook);
 
+  CString str;
+  str.Format(_T("Addr[%x][%x]"),_connect,AmhConnectHook);
+  ::OutputDebugString(str);
+
 }
 
-int WSAAPI CWs2Hook::connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
+int CWs2Hook::connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
 {
   int ret = SOCKET_ERROR;
   WriteAGLog(" CWs2Hook::connect.Begin");

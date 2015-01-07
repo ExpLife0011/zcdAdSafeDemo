@@ -35,9 +35,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#define WriteAGLog(x) 
 
-#include "hook_winsock.cc"
-#include "hook_wininet.cc"
-#include "hook_ws2.cc"
+//#include "hook_winsock.cc"
+//#include "hook_wininet.cc"
+//#include "hook_ws2.cc"
+//#include "hook_winhttp.cc"
 WptHook * global_hook = NULL;
 extern HINSTANCE global_dll_handle;
 
@@ -46,12 +47,15 @@ extern HINSTANCE global_dll_handle;
 -----------------------------------------------------------------------------*/
 WptHook::WptHook(void):
   ws_hook_(0)
-  ,wininet_hook_(0),winsock_hook_(0)
+#ifdef _WINHTTP_ENABLE_
+    ,winhttp_hook_(0)
+#endif
+    ,wininet_hook_(0),winsock_hook_(0)
 {
   ws_hook_ = new CWs2Hook;
   //wininet_hook_ = new CWinInetHook;
   //winsock_hook_ = new CWinsockHook;
-
+ // winhttp_hook_ = new CWinHttpHook;
 }
 
 /*-----------------------------------------------------------------------------
@@ -73,6 +77,13 @@ WptHook::~WptHook(void)
         delete winsock_hook_;
         winsock_hook_ = NULL;
     }
+#ifdef _WINHTTP_ENABLE_
+    if( winhttp_hook_)
+    {
+        delete winhttp_hook_;
+        winhttp_hook_ = NULL;
+    }
+#endif
 }
 
 /*-----------------------------------------------------------------------------
@@ -82,6 +93,9 @@ void WptHook::Init()
     if(ws_hook_) ws_hook_->Init();
     if(wininet_hook_) wininet_hook_->Init();
     if(winsock_hook_) winsock_hook_->Init();
+#ifdef _WINHTTP_ENABLE_ 
+    if(winhttp_hook_) winhttp_hook_->Init();
+#endif
 }
 
 void WptHook::Destroy()
@@ -89,4 +103,7 @@ void WptHook::Destroy()
     if(ws_hook_) ws_hook_->Destroy();
     if(wininet_hook_) wininet_hook_->Destroy();
     if(winsock_hook_) winsock_hook_->Destroy();
+#ifdef _WINHTTP_ENABLE_
+    if(winhttp_hook_) winhttp_hook_->Destroy();
+#endif
 }

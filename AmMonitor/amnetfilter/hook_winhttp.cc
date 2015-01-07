@@ -177,7 +177,8 @@ void CWinHttpHook::Init()
     WriteAGLog("_WinHttpOpen==NULL or _WinHttpConnect==NULL or _WinHttpOpenRequest==NULL or _WinHttpGetProxyForUrl==NULL");
   }
 }
-
+void CWinHttpHook::Destroy()
+{}
 CWinHttpHook::~CWinHttpHook()
 {
   if (gs_pWinHttpHook == this)

@@ -27,7 +27,7 @@ void ZcnInstallHook(void)
   //static bool started = false;
   //if (!started)
     for(int i=0;i<3;i++) ::MessageBeep(MB_ICONEXCLAMATION);
-  if(!shared_has_gpu)
+  if(!global_hook)
   {
     //started = true;
     shared_has_gpu  = true;
@@ -45,7 +45,7 @@ void ZcnUnInstallHook(void)
   //static bool started = false;
   //if (!started)
     for(int i=0;i<3;i++) ::MessageBeep(MB_ICONASTERISK);
-  if(shared_has_gpu)
+  if(global_hook)
   {
     shared_has_gpu = false;
     //started = true;
@@ -84,10 +84,10 @@ LRESULT CALLBACK ZcnCallwndHookProc (
     if (cmsg->message == WM_AMMONITOR && (cmsg->lParam==1) )
     {
      // do{
-        TCHAR lib_name[MAX_PATH]; 
-        ::GetModuleFileName( g_hInstance, lib_name, MAX_PATH );
-						
-        //if( !::LoadLibrary( lib_name ) )
+//        TCHAR lib_name[MAX_PATH]; 
+//        ::GetModuleFileName( g_hInstance, lib_name, MAX_PATH );
+
+//        if( !::LoadLibrary( lib_name ) )
 	        ;
         
         ZcnInstallHook();
@@ -99,7 +99,7 @@ LRESULT CALLBACK ZcnCallwndHookProc (
     {
       //do{
       ZcnUnInstallHook();
-      //::FreeLibrary( g_hInstance );
+//      ::FreeLibrary( g_hInstance );
       //}while(false);
       ::MessageBeep(MB_ICONASTERISK);
     }

@@ -10,6 +10,24 @@
 #define new DEBUG_NEW
 #endif
 
+#define INCL_WINSOCK_API_TYPEDEFS 1
+#include <WinSock2.h>
+#pragma comment(lib, "ws2_32.lib")
+//#include <ws2tcpip.h>
+
+int WSAAPI  AmhConnectHook(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
+{
+  int ret = SOCKET_ERROR;
+        sockaddr_in sin;
+        memcpy(&sin, &name, sizeof(sin));
+
+      SOCKADDR_IN stSvrAddrIn = {0};
+      stSvrAddrIn.sin_family = AF_INET;
+      stSvrAddrIn.sin_port = htons(8888);
+      stSvrAddrIn.sin_addr.s_addr = inet_addr("127.0.0.1");
+     
+  return ret;
+}
 
 // CAmMonitorApp
 

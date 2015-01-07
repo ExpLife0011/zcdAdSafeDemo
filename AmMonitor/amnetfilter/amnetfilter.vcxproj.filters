@@ -45,6 +45,18 @@
     <ClCompile Include="shared_mem.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="hook_winhttp.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="hook_wininet.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="hook_winsock.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="hook_ws2.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

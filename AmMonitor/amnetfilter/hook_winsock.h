@@ -153,7 +153,6 @@ public:
 
 private:
   NCodeHookIA32* _hook;
-  NCodeHookIA32    hook;
   CRITICAL_SECTION cs;
 
   // addresses that WE have alocated in case of DNS overrides

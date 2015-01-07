@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ncodehook/NCodeHookInstantiation.h"
 //typedef int (WINAPI *LPFN_CONNECT)(SOCKET s,
 //            const struct sockaddr FAR *name, int namelen);
+typedef int (WSAAPI *ConnectFunc ) (SOCKET socket, const struct sockaddr FAR* address, int addressLength);
 
 class CWs2Hook
 {
@@ -40,10 +41,10 @@ public:
   void Init();
   void Destroy();
 
-  int  WSAAPI connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen);
+  int connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen);
 private:
   NCodeHookIA32*  hook_;
   CRITICAL_SECTION cs;
   // pointers to the original implementations
-  LPFN_CONNECT      _connect;
+  LPFN_CONNECT _connect;
 };

@@ -107,6 +107,7 @@ CWinInetHook::~CWinInetHook(void)
 
 void CWinInetHook::Destroy(void)
 {
+  WriteAGLog("CWinInetHook::Destroy");
     if( hook_)
     {
   delete hook_;
@@ -122,10 +123,13 @@ void CWinInetHook::Destroy(void)
 
 void CWinInetHook::Init(void)
 {
+  WriteAGLog("CWinInetHook::Init");
   if(gs_pWinInetHook == NULL)
     gs_pWinInetHook = this;
   if( hook_ ) return;
   hook_ =  new NCodeHookIA32();
+
+  WriteAGLog("CWinInetHook::createHookByName");
 
  _InternetOpenW = hook_->createHookByName("wininet.dll", "InternetOpenW", InternetOpenW_Hook);
  _InternetOpenA = hook_->createHookByName("wininet.dll", "InternetOpenA", InternetOpenA_Hook);

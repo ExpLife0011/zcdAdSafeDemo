@@ -31,6 +31,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hook_wininet.h"
 #include "hook_ws2.h"
 
+#ifdef _WINHTTP_ENABLE_
+#include "hook_winhttp.h"
+
+#endif
+
+
 extern HINSTANCE g_hInstance; // DLL handle
 
 class WptHook {
@@ -45,5 +51,7 @@ private:
   CWs2Hook*   ws_hook_;
   CWinInetHook* wininet_hook_;
   CWinsockHook*   winsock_hook_;
-
+#ifdef _WINHTTP_ENABLE_
+  CWinHttpHook*   winhttp_hook_;
+#endif
 };
