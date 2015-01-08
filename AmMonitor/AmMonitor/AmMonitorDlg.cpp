@@ -185,8 +185,8 @@ void CAmMonitorDlg::OnBnClickedButtonFree()
   }
   
 }
-typedef int (*INSTALL)(HWND handle,HWND host);
-typedef int (*UNINSTALL)();
+typedef int (WINAPI *INSTALL)(HWND handle,HWND host);
+typedef int (WINAPI *UNINSTALL)();
  HWND hNotepad =NULL;
  //CString findWindClassName = _T("");
  LPCTSTR findWindowTitle=NULL;
@@ -197,7 +197,7 @@ typedef int (*UNINSTALL)();
 {
   // TODO: 在此添加控件通知处理程序代码
   INSTALL func = NULL;
-  func=(INSTALL)::GetProcAddress (g_hFilterInst,"ZcnInstallCallwndHook");
+  func=(INSTALL)::GetProcAddress (g_hFilterInst,"_ZcnInstallCallwndHook@8");
   if(func)
   {
     hNotepad =  ::FindWindow(findWindClassName,findWindowTitle);
@@ -212,7 +212,7 @@ typedef int (*UNINSTALL)();
 void CAmMonitorDlg::OnBnClickedButtonUnhook()
 {
   // TODO: 在此添加控件通知处理程序代码
-    UNINSTALL g_loadhook =(UNINSTALL)::GetProcAddress (g_hFilterInst,"ZcnUnInstallCallwndHook");
+    UNINSTALL g_loadhook =(UNINSTALL)::GetProcAddress (g_hFilterInst,"_ZcnUnInstallCallwndHook@0");
     if(g_loadhook)
     {
         g_loadhook();
@@ -225,11 +225,11 @@ void CAmMonitorDlg::OnBnClickedButtonInstall()
   hNotepad =  ::FindWindow(findWindClassName,findWindowTitle);
   UINT WM_HOOKEX = ::RegisterWindowMessage(_T("WM_AMMONITOR_RK" ));
     ::SendMessage(hNotepad,WM_HOOKEX,1,1);
-    //::SendMessage(HWND_BROADCAST,WM_HOOKEX,1,1);
+    //::PostMessage(hNotepad,WM_HOOKEX,1,1);
   //DWORD idProc = 0;
   //DWORD idTarget = ::GetWindowThreadProcessId(hNotepad,&idProc);
 
-  //PostThreadMessage(idTarget,WM_HOOKEX,0,1);
+  //PostThreadMessage(idProc,WM_HOOKEX,0,1);
   //DWORD dw = GetLastError();
 
 }

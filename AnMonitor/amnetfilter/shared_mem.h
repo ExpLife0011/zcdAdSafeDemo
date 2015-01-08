@@ -46,6 +46,7 @@ extern HHOOK global_hCallwndHook;
 extern int g_bSubclassed; // START button subclassed?
 extern HWND g_hWnd;  // handle of START button
 extern HHOOK g_hKbHook;
+
 extern HHOOK g_hCallwndHook ;
 
 extern UINT WM_AMMONITOR;
@@ -54,3 +55,5 @@ extern TCHAR const GUID_HOOKMSG[_MAX_PATH] ;
 extern TCHAR const GUID_HOOKMSGRET[_MAX_PATH] ;
 
 extern bool shared_proxy_enabled ;
+
+

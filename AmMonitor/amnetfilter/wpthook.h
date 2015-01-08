@@ -54,4 +54,8 @@ private:
 #ifdef _WINHTTP_ENABLE_
   CWinHttpHook*   winhttp_hook_;
 #endif
+  HINSTANCE mModWs2;
+  HINSTANCE mModWinhttp;
+  HINSTANCE mModWinInet;
+
 };

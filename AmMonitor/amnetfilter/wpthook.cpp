@@ -51,11 +51,16 @@ WptHook::WptHook(void):
     ,winhttp_hook_(0)
 #endif
     ,wininet_hook_(0),winsock_hook_(0)
+    ,mModWs2(0),mModWinhttp(0),mModWinInet(0)
 {
   ws_hook_ = new CWs2Hook;
   //wininet_hook_ = new CWinInetHook;
   //winsock_hook_ = new CWinsockHook;
  // winhttp_hook_ = new CWinHttpHook;
+
+  mModWs2 = LoadLibraryA("ws2_32.dll"); 
+  //mModWinhttp = LoadLibraryA("winhttp.dll"); 
+  //mModWinInet = LoadLibraryA("wininet.dll"); 
 }
 
 /*-----------------------------------------------------------------------------
@@ -84,6 +89,12 @@ WptHook::~WptHook(void)
         winhttp_hook_ = NULL;
     }
 #endif
+
+
+    if(mModWs2) FreeLibrary(mModWs2);
+    if(mModWinhttp) FreeLibrary(mModWinhttp);
+    if(mModWinInet) FreeLibrary(mModWinInet);
+
 }
 
 /*-----------------------------------------------------------------------------

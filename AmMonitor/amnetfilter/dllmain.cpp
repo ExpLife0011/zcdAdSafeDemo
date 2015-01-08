@@ -6,6 +6,7 @@
 #include "shared_mem.h"
 #include "wpthook.h"
 extern WptHook * global_hook;
+#include "helper.h"
 
 const TCHAR szApp[] = _T("DllPart.dll");
 
@@ -15,24 +16,25 @@ HWND global_target = NULL;
 HWND global_host = NULL;
 
 extern "C" {
-__declspec( dllexport ) void ZcnInstallHook(void);
-__declspec( dllexport ) void ZcnUnInstallHook(void);
-__declspec( dllexport ) int ZcnInstallCallwndHook(HWND handle,HWND host);
-__declspec( dllexport ) int ZcnUnInstallCallwndHook(void);
+__declspec( dllexport ) void WINAPI ZcnInstallHook(void);
+__declspec( dllexport ) void WINAPI ZcnUnInstallHook(void);
+__declspec( dllexport ) int WINAPI ZcnInstallCallwndHook(HWND handle,HWND host);
+__declspec( dllexport ) int WINAPI ZcnUnInstallCallwndHook(void);
 }
 
 
-void ZcnInstallHook(void)
+void WINAPI ZcnInstallHook(void)
 {
   //static bool started = false;
   //if (!started)
     for(int i=0;i<3;i++) ::MessageBeep(MB_ICONEXCLAMATION);
+  ::OutputDebugStringA("ZcnInstallHook");
   if(!global_hook)
   {
     //started = true;
     shared_has_gpu  = true;
 
-    // actually do the startup work
+    ::OutputDebugStringA("actually do the startup work");
     global_hook = new WptHook;
     global_hook->Init();
 
@@ -40,11 +42,12 @@ void ZcnInstallHook(void)
   return;
 }
 
-void ZcnUnInstallHook(void)
+void WINAPI ZcnUnInstallHook(void)
 {
   //static bool started = false;
   //if (!started)
     for(int i=0;i<3;i++) ::MessageBeep(MB_ICONASTERISK);
+  ::OutputDebugStringA("ZcnUnInstallHook");
   if(global_hook)
   {
     shared_has_gpu = false;
@@ -52,6 +55,7 @@ void ZcnUnInstallHook(void)
 
   if( global_hook) 
   {
+    ::OutputDebugStringA("actually do the remove work");
    // global_hook->Destroy();
     delete global_hook;
     global_hook = NULL;
@@ -107,7 +111,7 @@ LRESULT CALLBACK ZcnCallwndHookProc (
 
   return ::CallNextHookEx(global_hCallwndHook, nCode, wParam, lParam);
 }
-int ZcnInstallCallwndHook(HWND handle,HWND host)
+int WINAPI ZcnInstallCallwndHook(HWND handle,HWND host)
 {
 
   DWORD ThreadId=0;// GetWindowThreadProcessId(handle, NULL);
@@ -118,6 +122,7 @@ int ZcnInstallCallwndHook(HWND handle,HWND host)
   if( global_hCallwndHook)
   {
     DWORD err = GetLastError();
+    //ZcnInstallHook();
   }
   else
   {
@@ -126,7 +131,7 @@ int ZcnInstallCallwndHook(HWND handle,HWND host)
   }
   return (global_hCallwndHook != NULL);
 }
-int ZcnUnInstallCallwndHook( )
+int WINAPI ZcnUnInstallCallwndHook( )
 {
   //
   /*向目标线程发送消息进行API UNHOOK*/
@@ -139,7 +144,7 @@ int ZcnUnInstallCallwndHook( )
     //do {
     //    GetMessage(&Msg,NULL,0,0);
     //}while(Msg.message !=  WM_AMMONITORRET);
-
+    //ZcnUnInstallHook();
     UnhookWindowsHookEx(global_hCallwndHook);
 
     //PostThreadMessage(idTarget,WM_DISABLEAPIHOOKOK,(WPARAM)GetCurrentThreadId(),0);
@@ -197,6 +202,8 @@ BOOL APIENTRY DllMain( HMODULE hModule,
                        LPVOID lpReserved)
 {
   BOOL ok = TRUE;
+            g_hInstance = (HINSTANCE)hModule;
+
   switch (ul_reason_for_call)
   {
     case DLL_PROCESS_ATTACH:
@@ -222,11 +229,14 @@ BOOL APIENTRY DllMain( HMODULE hModule,
           ok = TRUE;
         }
         else if(/*lstrlen(shared_browser_exe) &&*/
-                  /*IsCorrectBrowserProcess(exe)*/
-                  true)
+                  !IsCorrectBrowserProcess(exe)
+                  )
         {
           ok = TRUE;
-          g_hInstance = (HINSTANCE)hModule;
+        }
+        else
+        {
+          ok = TRUE;
           if(WM_AMMONITOR == 0) WM_AMMONITOR = ::RegisterWindowMessage(GUID_HOOKMSG);
           if(WM_AMMONITORRET == 0) WM_AMMONITORRET = ::RegisterWindowMessage(GUID_HOOKMSGRET);
           // IE gets instrumented from the BHO so don't start the actual

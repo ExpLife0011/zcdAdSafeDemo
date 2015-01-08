@@ -127,6 +127,7 @@
     </ClCompile>
     <ClCompile Include="util.cpp" />
     <ClCompile Include="wpthook.cpp" />
+    <ClCompile Include="WsHook.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shared_mem.h" />
@@ -137,6 +138,7 @@
     <ClInclude Include="ncodehook\NCodeHookItem.h" />
     <ClInclude Include="util.h" />
     <ClInclude Include="wpthook.h" />
+    <ClInclude Include="WsHook.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

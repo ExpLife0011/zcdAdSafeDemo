@@ -6,6 +6,7 @@
 #include "shared_mem.h"
 #include "wpthook.h"
 extern WptHook * global_hook;
+#include "WsHook.h"
 
 const TCHAR szApp[] = _T("DllPart.dll");
 
@@ -24,6 +25,8 @@ __declspec( dllexport ) int ZcnUnInstallCallwndHook(void);
 
 void ZcnInstallHook(void)
 {
+  WsInstallHooks();
+  return;
   //static bool started = false;
   //if (!started)
     for(int i=0;i<3;i++) ::MessageBeep(MB_ICONEXCLAMATION);
@@ -33,8 +36,9 @@ void ZcnInstallHook(void)
     shared_has_gpu  = true;
 
     // actually do the startup work
-    global_hook = new WptHook;
-    global_hook->Init();
+    //global_hook = new WptHook;
+    //global_hook->Init();
+    WsInstallHooks();
 
   }
   return;
@@ -42,6 +46,8 @@ void ZcnInstallHook(void)
 
 void ZcnUnInstallHook(void)
 {
+  WsRemoveHooks();
+  return;
   //static bool started = false;
   //if (!started)
     for(int i=0;i<3;i++) ::MessageBeep(MB_ICONASTERISK);
@@ -233,12 +239,13 @@ BOOL APIENTRY DllMain( HMODULE hModule,
           // hooking, just let the DLL load
           //if (lstrcmpi(exe, _T("iexplore.exe")))
             //ZcnInstallHook();
-          HWND hw = GetMainWindow();
+          //HWND hw = GetMainWindow();
             //ZcnInstallCallwndHook(hw);
             //
             //LoadLibrary(path);
+         // LoadLibrary(_T("ws2_32.dll"));
             ::MessageBeep(MB_OK);
-            //DisableThreadLibraryCalls(hModule);
+           // DisableThreadLibraryCalls(hModule);
         }
       }
     }
@@ -255,16 +262,4 @@ BOOL APIENTRY DllMain( HMODULE hModule,
   return ok;
 }
 
-
-
-/*显示GetLastError的信息*/
-
-void showerr(const char *m)
-{
-    char message[255];
-    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM,0,GetLastError()
-     ,MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),message,255, 0);
-    MessageBoxA(NULL,message,m,MB_OK);
-
-}
 

@@ -37,7 +37,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define INCL_WINSOCK_API_TYPEDEFS 1
 #include <WinSock2.h>
 
+#pragma data_seg (".Shared")
+
 static CWs2Hook * g_pWsHook = NULL;
+#pragma data_seg ()
+
+#pragma comment(linker,"/SECTION:.Shared,RWS")
+
 
 /******************************************************************************
 *******************************************************************************
@@ -51,18 +57,17 @@ static CWs2Hook * g_pWsHook = NULL;
 static int WSAAPI  AmhConnectHook(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
 {
 
-//int ret = SOCKET_ERROR;
+  WriteAGLog("connect_AGHook Begin");
+  int ret = SOCKET_ERROR;
 //if (g_pWsHook)
 //  ret = g_pWsHook->connect(s, name, namelen);
 //  return ret;
 
-  WriteAGLog("connect_AGHook Begin");
-  int ret = SOCKET_ERROR;
   __try{
     if(g_pWsHook)
     {
       WriteAGLog("...");
-      BOOL bMark = FALSE;
+      BOOL bMark = TRUE;
       if (name!=NULL)
       {
           WriteAGLog(".1A");
