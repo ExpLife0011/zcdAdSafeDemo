@@ -37,12 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define INCL_WINSOCK_API_TYPEDEFS 1
 #include <WinSock2.h>
 
-#pragma data_seg (".Shared")
 
-static CWs2Hook * g_pWsHook = NULL;
-#pragma data_seg ()
+CWs2Hook * g_pWsHook = NULL;
 
-#pragma comment(linker,"/SECTION:.Shared,RWS")
 
 
 /******************************************************************************
@@ -67,7 +64,7 @@ static int WSAAPI  AmhConnectHook(IN SOCKET s, const struct sockaddr FAR * name,
     if(g_pWsHook)
     {
       WriteAGLog("...");
-      BOOL bMark = TRUE;
+      BOOL bMark = FALSE;
       if (name!=NULL)
       {
           WriteAGLog(".1A");
@@ -164,20 +161,28 @@ if (g_pWsHook || hook_)
   _connect = hook_->createHookByName("ws2_32.dll", "connect", AmhConnectHook);
 
   CString str;
-  str.Format(_T("Addr[%x][%x]"),_connect,AmhConnectHook);
+  LPBYTE p = (LPBYTE)AmhConnectHook;
+  str.Format(_T("Addr[%x][%x %x %x %x %x %x]"),AmhConnectHook,p[0],p[1],p[2],p[3],p[4],p[5]);
+  ::OutputDebugString(str);
+   p = (LPBYTE)_connect;
+  str.Format(_T("Addr[%x][%x %x %x %x %x %x]"),_connect,p[0],p[1],p[2],p[3],p[4],p[5]);
   ::OutputDebugString(str);
 
 }
 
-int CWs2Hook::connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
+int CWs2Hook::connect(__in SOCKET s,
+__in_bcount(namelen) const struct sockaddr FAR * name,
+__in int namelen
+)
+//IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
 {
   int ret = SOCKET_ERROR;
   WriteAGLog(" CWs2Hook::connect.Begin");
   if (_connect)
   {
-      WriteAGLog(" CWs2Hook::connect.1");
+     WriteAGLog(" CWs2Hook::connect.1");
     ret = _connect(s, name, namelen);
-    WriteAGLog(" CWs2Hook::connect.2");
+   WriteAGLog(" CWs2Hook::connect.2");
   }
   WriteAGLog(" CWs2Hook::connect.END");
   return ret;

@@ -36,7 +36,7 @@ void WINAPI ZcnInstallHook(void)
 
     ::OutputDebugStringA("actually do the startup work");
     global_hook = new WptHook;
-    global_hook->Init();
+    //global_hook->Init();
 
   }
   return;
@@ -122,7 +122,7 @@ int WINAPI ZcnInstallCallwndHook(HWND handle,HWND host)
   if( global_hCallwndHook)
   {
     DWORD err = GetLastError();
-    //ZcnInstallHook();
+    ZcnInstallHook();
   }
   else
   {
@@ -243,12 +243,12 @@ BOOL APIENTRY DllMain( HMODULE hModule,
           // hooking, just let the DLL load
           //if (lstrcmpi(exe, _T("iexplore.exe")))
             //ZcnInstallHook();
-          HWND hw = GetMainWindow();
+          //HWND hw = GetMainWindow();
             //ZcnInstallCallwndHook(hw);
             //
             //LoadLibrary(path);
             ::MessageBeep(MB_OK);
-            //DisableThreadLibraryCalls(hModule);
+            DisableThreadLibraryCalls(hModule);
         }
       }
     }

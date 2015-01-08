@@ -61,6 +61,7 @@ WptHook::WptHook(void):
   mModWs2 = LoadLibraryA("ws2_32.dll"); 
   //mModWinhttp = LoadLibraryA("winhttp.dll"); 
   //mModWinInet = LoadLibraryA("wininet.dll"); 
+  Init();
 }
 
 /*-----------------------------------------------------------------------------
