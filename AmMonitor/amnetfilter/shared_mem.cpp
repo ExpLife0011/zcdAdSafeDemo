@@ -52,6 +52,9 @@ HWND g_hWnd = 0;  // handle of START button
 HHOOK g_hKbHook = NULL;
 bool shared_proxy_enabled = true;
 
+WCHAR shared_browser_exe[MAX_PATH] = {NULL};
+DWORD shared_browser_process_id = 0;
+const TCHAR shared_app_exe[] = _T("AmMonitor.dll");
 
 HHOOK shared_hook_handle = 0;
 WCHAR shared_results_file_base[MAX_PATH] = {NULL};
@@ -63,8 +66,6 @@ int   shared_debug_level = 0;
 int   shared_cpu_utilization = 0;
 bool  shared_has_gpu = false;
 int   shared_result = -1;
-WCHAR shared_browser_exe[MAX_PATH] = {NULL};
-DWORD shared_browser_process_id = 0;
 #pragma data_seg ()
 
 #pragma comment(linker,"/SECTION:.SharedDataName,RWS")

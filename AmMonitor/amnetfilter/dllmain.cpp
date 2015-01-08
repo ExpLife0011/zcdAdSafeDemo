@@ -16,14 +16,14 @@ HWND global_target = NULL;
 HWND global_host = NULL;
 
 extern "C" {
-__declspec( dllexport ) void WINAPI ZcnInstallHook(void);
-__declspec( dllexport ) void WINAPI ZcnUnInstallHook(void);
-__declspec( dllexport ) int WINAPI ZcnInstallCallwndHook(HWND handle,HWND host);
-__declspec( dllexport ) int WINAPI ZcnUnInstallCallwndHook(void);
+__declspec( dllexport ) void ZcnInstallHook(void);
+__declspec( dllexport ) void ZcnUnInstallHook(void);
+__declspec( dllexport ) int ZcnInstallCallwndHook(HWND handle,HWND host);
+__declspec( dllexport ) int ZcnUnInstallCallwndHook(void);
 }
 
 
-void WINAPI ZcnInstallHook(void)
+void ZcnInstallHook(void)
 {
   //static bool started = false;
   //if (!started)
@@ -36,13 +36,13 @@ void WINAPI ZcnInstallHook(void)
 
     ::OutputDebugStringA("actually do the startup work");
     global_hook = new WptHook;
-    //global_hook->Init();
+    global_hook->Init();
 
   }
   return;
 }
 
-void WINAPI ZcnUnInstallHook(void)
+void ZcnUnInstallHook(void)
 {
   //static bool started = false;
   //if (!started)
@@ -111,7 +111,7 @@ LRESULT CALLBACK ZcnCallwndHookProc (
 
   return ::CallNextHookEx(global_hCallwndHook, nCode, wParam, lParam);
 }
-int WINAPI ZcnInstallCallwndHook(HWND handle,HWND host)
+int ZcnInstallCallwndHook(HWND handle,HWND host)
 {
 
   DWORD ThreadId=0;// GetWindowThreadProcessId(handle, NULL);
@@ -131,7 +131,7 @@ int WINAPI ZcnInstallCallwndHook(HWND handle,HWND host)
   }
   return (global_hCallwndHook != NULL);
 }
-int WINAPI ZcnUnInstallCallwndHook( )
+int ZcnUnInstallCallwndHook( )
 {
   //
   /*向目标线程发送消息进行API UNHOOK*/
@@ -172,31 +172,6 @@ int ZcnInstallCallwndHookMy()
   return (global_hCallwndHook != NULL);
 }
 
-BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) 
-{ 
-    DWORD dwCurProcessId = *((DWORD*)lParam); 
-    DWORD dwProcessId = 0; 
- 
-    GetWindowThreadProcessId(hwnd, &dwProcessId); 
-    if(dwProcessId == dwCurProcessId && GetParent(hwnd) == NULL)
-    { 
-        *((HWND *)lParam) = hwnd;
-        return FALSE; 
-    } 
-    return TRUE; 
-} 
- 
- 
-HWND GetMainWindow() 
-{ 
-    DWORD dwCurrentProcessId = GetCurrentProcessId();
-    if(!EnumWindows(EnumWindowsProc, (LPARAM)&dwCurrentProcessId)) 
-    {     
-        return (HWND)dwCurrentProcessId; 
-    } 
-    return NULL; 
-} 
- 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved)
@@ -216,14 +191,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
       if (GetModuleFileName(NULL, path, _countof(path)))
       {
         TCHAR exe[MAX_PATH];
-        lstrcpy(exe, path);
-        TCHAR * token = _tcstok(path, _T("\\"));
-        while (token != NULL)
-        {
-          if (lstrlen(token))
-            lstrcpy(exe, token);
-          token = _tcstok(NULL, _T("\\"));
-        }
+        GetExeProcessName(exe,path);
 
         if (!lstrcmpi(exe, szApp)) {
           ok = TRUE;

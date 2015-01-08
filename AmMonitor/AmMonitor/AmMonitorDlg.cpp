@@ -185,8 +185,8 @@ void CAmMonitorDlg::OnBnClickedButtonFree()
   }
   
 }
-typedef int (WINAPI *INSTALL)(HWND handle,HWND host);
-typedef int (WINAPI *UNINSTALL)();
+typedef int (*INSTALL)(HWND handle,HWND host);
+typedef int (*UNINSTALL)();
  HWND hNotepad =NULL;
  //CString findWindClassName = _T("");
  LPCTSTR findWindowTitle=NULL;
@@ -197,7 +197,7 @@ typedef int (WINAPI *UNINSTALL)();
 {
   // TODO: 在此添加控件通知处理程序代码
   INSTALL func = NULL;
-  func=(INSTALL)::GetProcAddress (g_hFilterInst,"_ZcnInstallCallwndHook@8");
+  func=(INSTALL)::GetProcAddress (g_hFilterInst,"ZcnInstallCallwndHook");
   if(func)
   {
     hNotepad =  ::FindWindow(findWindClassName,findWindowTitle);
@@ -212,7 +212,7 @@ typedef int (WINAPI *UNINSTALL)();
 void CAmMonitorDlg::OnBnClickedButtonUnhook()
 {
   // TODO: 在此添加控件通知处理程序代码
-    UNINSTALL g_loadhook =(UNINSTALL)::GetProcAddress (g_hFilterInst,"_ZcnUnInstallCallwndHook@0");
+    UNINSTALL g_loadhook =(UNINSTALL)::GetProcAddress (g_hFilterInst,"ZcnUnInstallCallwndHook");
     if(g_loadhook)
     {
         g_loadhook();

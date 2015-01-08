@@ -1,6 +1,8 @@
 #pragma once
-#include <time.h>
 #include <Windows.h>
 
 
 bool IsCorrectBrowserProcess(LPCTSTR exe);
+HWND GetMainWindow() ;
+
+bool GetExeProcessName(LPTSTR exePath,LPCTSTR modPath);
