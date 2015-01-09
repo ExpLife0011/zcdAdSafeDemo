@@ -70,6 +70,8 @@ BEGIN_MESSAGE_MAP(CAmMonitorDlg, CDialogEx)
   ON_BN_CLICKED(IDC_BUTTON_INSTALL, &CAmMonitorDlg::OnBnClickedButtonInstall)
   ON_BN_CLICKED(IDC_BUTTON_UNINSTALL, &CAmMonitorDlg::OnBnClickedButtonUninstall)
   ON_BN_CLICKED(IDC_BUTTON_REMOTEI, &CAmMonitorDlg::OnBnClickedButtonRemotei)
+  ON_BN_CLICKED(IDC_BUTTON_INSTALL_IE, &CAmMonitorDlg::OnBnClickedButtonInstallIe)
+  ON_BN_CLICKED(IDC_BUTTON_UNINSTALL_IE, &CAmMonitorDlg::OnBnClickedButtonUninstallIe)
 END_MESSAGE_MAP()
 
 
@@ -160,12 +162,8 @@ HCURSOR CAmMonitorDlg::OnQueryDragIcon()
 
 #include "KGRemote.h"
 HINSTANCE g_hFilterInst=NULL;
-//CString ROOTDIR =_T("");
-#ifdef _DEBUG
- CString ROOTDIR =_T("D:\\work\\work_zcdadsafedemo.wc2\\AmMonitor\\Debug\\");
-#else
- CString ROOTDIR =_T("D:\\work\\work_zcdadsafedemo.wc2\\AmMonitor\\Release\\");
-#endif
+CString ROOTDIR =_T("");
+
 void CAmMonitorDlg::OnBnClickedButtonLoad()
 {
   // TODO: 在此添加控件通知处理程序代码
@@ -248,10 +246,32 @@ void CAmMonitorDlg::OnBnClickedButtonUninstall()
   //PostThreadMessage(idProc,WM_HOOKEX,0,0);
 }
 
-
+#ifdef _DEBUG
+ CString ROOTDIR2 =_T("D:\\work\\work_zcdadsafedemo.wc2\\AmMonitor\\Debug\\");
+#else
+ CString ROOTDIR2 =_T("D:\\work\\work_zcdadsafedemo.wc2\\AmMonitor\\Release\\");
+#endif
 void CAmMonitorDlg::OnBnClickedButtonRemotei()
 {
   // TODO: 在此添加控件通知处理程序代码
-  CString str =ROOTDIR+_T("amnetfilter.dll");
+  CString str =ROOTDIR2+_T("amnetfilter.dll");
   KGEnumProcInjectLibraryIE(str);
+}
+
+
+void CAmMonitorDlg::OnBnClickedButtonInstallIe()
+{
+  // TODO: 在此添加控件通知处理程序代码
+  
+  UINT WM_HOOKEX = ::RegisterWindowMessage(_T("WM_AMMONITOR_RK" ));
+   KGEnumProcSendMessageIE(WM_HOOKEX,1,1);
+}
+
+
+void CAmMonitorDlg::OnBnClickedButtonUninstallIe()
+{
+  // TODO: 在此添加控件通知处理程序代码
+  
+  UINT WM_HOOKEX = ::RegisterWindowMessage(_T("WM_AMMONITOR_RK" ));
+   KGEnumProcSendMessageIE(WM_HOOKEX,1,0);
 }

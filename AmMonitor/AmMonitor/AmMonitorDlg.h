@@ -38,4 +38,6 @@ public:
   afx_msg void OnBnClickedButtonInstall();
   afx_msg void OnBnClickedButtonUninstall();
   afx_msg void OnBnClickedButtonRemotei();
+  afx_msg void OnBnClickedButtonInstallIe();
+  afx_msg void OnBnClickedButtonUninstallIe();
 };

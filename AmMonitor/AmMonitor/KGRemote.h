@@ -18,3 +18,6 @@ DWORD KGEnumProcEjectLibrary(LPCTSTR lpcszPath);
 DWORD KGEnumProcInjectLibraryIE(LPCTSTR lpcszPath);
 DWORD KGEnumProcEjectLibraryIE(LPCTSTR lpcszPath);
 HWND GetMainWindow(DWORD pid) ;
+DWORD KGEnumProcSendMessageIE(   __in UINT Msg,
+    __in WPARAM wParam,
+    __in LPARAM lParam);

@@ -53,9 +53,9 @@ WptHook::WptHook(void):
     ,wininet_hook_(0),winsock_hook_(0)
     ,mModWs2(0),mModWinhttp(0),mModWinInet(0)
 {
-  //ws_hook_ = new CWs2Hook;
+  ws_hook_ = new CWs2Hook;
   //wininet_hook_ = new CWinInetHook;
-  winsock_hook_ = new CWinsockHook;
+  //winsock_hook_ = new CWinsockHook;
  // winhttp_hook_ = new CWinHttpHook;
 
   //mModWs2 = LoadLibraryA("ws2_32.dll"); 

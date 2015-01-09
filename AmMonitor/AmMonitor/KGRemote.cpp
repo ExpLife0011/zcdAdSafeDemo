@@ -2,7 +2,8 @@
 #include <Windows.h>
 #include <tlhelp32.h>
 #include "KGRemote.h"
-
+#include <vector>
+#include <set>
 
 //提升进程权限
 bool EnableDebugPrivilege(const LPCTSTR name)
@@ -230,9 +231,9 @@ DWORD KGEnumProcEjectLibrary(LPCTSTR lpcszPath)
 }
 
 
-//#define BROWSER_PROCESS _T("iexplore.exe")
+#define BROWSER_PROCESS _T("iexplore.exe")
 //#define BROWSER_PROCESS _T("chrome.exe")
-#define BROWSER_PROCESS _T("AgAdsafeDemo.exe")
+//#define BROWSER_PROCESS _T("AgAdsafeDemo.exe")
 
 DWORD KGEnumProcInjectLibraryIE(LPCTSTR lpcszPath)
 {
@@ -310,3 +311,53 @@ HWND GetMainWindow(DWORD pid)
     } 
     return NULL; 
 } 
+
+
+DWORD KGEnumProcSendMessageIE(   __in UINT Msg,
+    __in WPARAM wParam,
+    __in LPARAM lParam)
+{
+  std::set<DWORD> procIDList;
+  procIDList.clear();
+  //enableProcessPrivilege();
+  //快照进程信息
+  HANDLE hSnapshot=CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+  PROCESSENTRY32 lppe;
+  lppe.dwSize=sizeof(PROCESSENTRY32);
+  //获得第一个进程的信息
+  BOOL bOK = Process32FirstW(hSnapshot,&lppe);
+  while(bOK)
+  {
+//   lppe.th32ProcessID;
+    if( 0==lstrcmpi(lppe.szExeFile,BROWSER_PROCESS))
+    {
+      TRACE( lppe.szExeFile);TRACE("\n");
+      OutputDebugStringW(lppe.szExeFile);OutputDebugStringA("\n");
+      //KGRemoteInjectLibrary(lppe.th32ProcessID,lpcszPath);
+      procIDList.insert(lppe.th32ProcessID);
+    }
+    bOK = Process32Next(hSnapshot,&lppe);
+  }
+  CloseHandle(hSnapshot);
+
+  
+   HWND hwnd=::GetTopWindow(NULL);
+    while(hwnd)
+    {
+        DWORD pid=0;
+        DWORD dwProcessId=GetWindowThreadProcessId(hwnd,&pid);
+
+        if(dwProcessId!=0)
+        {
+            if(procIDList.find(pid) != procIDList.end())
+            {
+                ::SendMessage( hwnd,Msg,wParam,lParam);
+            }
+        }
+
+        hwnd=::GetNextWindow(hwnd,GW_HWNDNEXT);
+    }
+    procIDList.clear();
+  return 0;
+
+}
