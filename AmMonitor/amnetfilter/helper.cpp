@@ -25,7 +25,7 @@ bool IsCorrectBrowserProcess(LPCTSTR exe)
 
 int GetBrowserVersion(LPCTSTR exe)
 {
-
+  return 0;
 }
 
 BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) 

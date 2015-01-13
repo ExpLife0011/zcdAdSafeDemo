@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "StdAfx.h"
 #include "hook_winsock.h"
+#include "shared_mem.h"
 #include "zcdbg.h"
 //#include "request.h"
 //#include "track_dns.h"
@@ -45,294 +46,407 @@ static CWinsockHook * g_pWinsockHook = NULL;
 #define TRACE_WINSOCK 1
 /******************************************************************************
 *******************************************************************************
-**															                                    				 **
-**								                  Stub Functions		          						 **
-**													                                    						 **
+**                                                                           **
+**                                  Stub Functions                           **
+**                                                                           **
 *******************************************************************************
 ******************************************************************************/
 
-SOCKET WSAAPI WSASocketW_Hook(int af, int type, int protocol,
-                  LPWSAPROTOCOL_INFOW lpProtocolInfo, GROUP g, DWORD dwFlags) {
-  SOCKET ret = SOCKET_ERROR;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->WSASocketW(af, type, protocol, lpProtocolInfo, g, dwFlags);
-  return ret;
-}
+int WSAAPI AmhHook_connect(IN SOCKET s, const struct sockaddr FAR * name,
+ IN int namelen)
+{
 
-int WSAAPI closesocket_Hook(SOCKET s) {
-  int ret = SOCKET_ERROR;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->closesocket(s);
-  return ret;
-}
-
-int WSAAPI connect_Hook(IN SOCKET s, const struct sockaddr FAR * name,
-                                                              IN int namelen) {
-  //int ret = SOCKET_ERROR;
-  //if (g_pWinsockHook)
-  //  ret = g_pWinsockHook->connect(s, name, namelen);
-
-  WriteAGLog("connect_AGHook Begin");
+  OutputDebugLog("AmhHook_connect Begin");
   int ret = SOCKET_ERROR;
   __try{
     if(g_pWinsockHook)
     {
-      WriteAGLog("...");
-      BOOL bMark = FALSE;
+      OutputDebugLog("...");
+      bool bUseOriginalFuncData = false;
       if (name!=NULL)
       {
         sockaddr_in sin;
         memcpy(&sin, &name, sizeof(sin));
 
-        WriteAGLog("");
         if(sin.sin_port==htons(9222))
         {
-          bMark = TRUE;
+          bUseOriginalFuncData = true;
         }
       }
-      SOCKADDR_IN stSvrAddrIn = {0};
-      stSvrAddrIn.sin_family = AF_INET;
-      stSvrAddrIn.sin_port = htons(8888);
-      stSvrAddrIn.sin_addr.s_addr = inet_addr("127.0.0.1");
-      if (bMark)
-      {
 
+      if(!shared_proxy_enabled) bUseOriginalFuncData = true;
+
+      if (bUseOriginalFuncData)
+      {
         ret = g_pWinsockHook->connect(s, name, namelen);
       }
       else
       {
-        ret = g_pWinsockHook->connect(s, (SOCKADDR*)&stSvrAddrIn/*name*/, sizeof(SOCKADDR)/*namelen*/);
+        SOCKADDR_IN stSvrAddr = {0};
+        stSvrAddr.sin_family = AF_INET;
+        stSvrAddr.sin_port = htons(shared_proxy_port);
+        stSvrAddr.sin_addr.s_addr = inet_addr(shared_proxy_ip);
+
+        ret = g_pWinsockHook->connect(s, (SOCKADDR*)&stSvrAddr/*name*/, sizeof(SOCKADDR)/*namelen*/);
       }
 
       if (SOCKET_ERROR == ret)
       {
-        WriteAGLog("ret==SOCKET_ERROR");
+          OutputDebugLog("ret==SOCKET_ERROR");
       }
     }
   }__except(1){
-    WriteAGLog("connect_AGHook Failed");
+      OutputDebugLog("AmhHook_connect Failed");
   }
-  WriteAGLog("connect_AGHook End");
+    OutputDebugLog("AmhHook_connect End");
   return ret;
 }
 
-BOOL PASCAL ConnectEx_Hook(SOCKET s, const struct sockaddr FAR *name,
+BOOL PASCAL AmhHook_ConnectEx(SOCKET s, const struct sockaddr FAR *name,
     int namelen, PVOID lpSendBuffer, DWORD dwSendDataLength,
     LPDWORD lpdwBytesSent, LPOVERLAPPED lpOverlapped)
 {
-  //BOOL ret = FALSE;
-  //if (g_pWinsockHook)
-  //  g_pWinsockHook->ConnectEx(s, name, namelen, lpSendBuffer, dwSendDataLength,
-  //                   lpdwBytesSent, lpOverlapped);
 
-  WriteAGLog("connectEx_AGHook Begin");
+  OutputDebugLog("AmhHook_ConnectEx Begin");
   BOOL ret = FALSE;
   __try{
     if(g_pWinsockHook)
     {
 
-      BOOL bMark = FALSE;
-      SOCKADDR_IN stSvrAddrIn = {0};
-      stSvrAddrIn.sin_family = AF_INET;
-      stSvrAddrIn.sin_port = htons(8888);
-      stSvrAddrIn.sin_addr.s_addr = inet_addr("127.0.0.1");
-      if (bMark)
+      bool bUseOriginalFuncData = false;
+      if(!shared_proxy_enabled) bUseOriginalFuncData = true;
+
+      if (bUseOriginalFuncData)
       {
-          g_pWinsockHook->ConnectEx(s, name, namelen, lpSendBuffer, dwSendDataLength,
-                     lpdwBytesSent, lpOverlapped);
+          g_pWinsockHook->ConnectEx(s, name, namelen, lpSendBuffer, dwSendDataLength, lpdwBytesSent, lpOverlapped);
       }
       else
       {
-          g_pWinsockHook->ConnectEx(s,(SOCKADDR*)&stSvrAddrIn/*name*/, sizeof(SOCKADDR)/*namelen*/
-                  , lpSendBuffer, dwSendDataLength, lpdwBytesSent, lpOverlapped);
+        SOCKADDR_IN stSvrAddr = {0};
+        stSvrAddr.sin_family = AF_INET;
+        stSvrAddr.sin_port = htons(shared_proxy_port);
+        stSvrAddr.sin_addr.s_addr = inet_addr(shared_proxy_ip);
+
+        g_pWinsockHook->ConnectEx(s,(SOCKADDR*)&stSvrAddr/*name*/, sizeof(SOCKADDR)/*namelen*/  , lpSendBuffer, dwSendDataLength, lpdwBytesSent, lpOverlapped);
       }
 
       if (SOCKET_ERROR == ret)
       {
-        WriteAGLog("ret==SOCKET_ERROR");
+          OutputDebugLog("ret==SOCKET_ERROR");
       }
     }
   }__except(1){
-    WriteAGLog("connectEx_AGHook Failed");
+      OutputDebugLog("AmhHook_ConnectEx Failed");
   }
-  WriteAGLog("connectEx_AGHook End");
-  return ret;;
+  OutputDebugLog("AmhHook_ConnectEx End");
   return ret;
 }
 
-int WSAAPI recv_Hook(SOCKET s, char FAR * buf, int len, int flags) {
+SOCKET WSAAPI AmhHook_WSASocketW(int af, int type, int protocol,
+                  LPWSAPROTOCOL_INFOW lpProtocolInfo, GROUP g, DWORD dwFlags)
+{
+  SOCKET ret = SOCKET_ERROR;
+  __try{
+    if (g_pWinsockHook)
+      ret = g_pWinsockHook->WSASocketW(af, type, protocol, lpProtocolInfo, g, dwFlags);
+
+  }__except(1){
+      OutputDebugLog("AmhHook_WSASocketW Failed");
+  }
+  return ret;
+}
+
+int WSAAPI AmhHook_closesocket(SOCKET s)
+{
   int ret = SOCKET_ERROR;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->recv(s, buf, len, flags);
+  __try{
+    if (g_pWinsockHook)
+      ret = g_pWinsockHook->closesocket(s);
+
+  }__except(1){
+      OutputDebugLog("AmhHook_closesocket Failed");
+  }
   return ret;
 }
 
-int WSAAPI select_Hook(int nfds, fd_set FAR * readfds, fd_set FAR * writefds,
-              fd_set FAR * exceptfds, const struct timeval FAR * timeout) {
+int WSAAPI AmhHook_recv(SOCKET s, char FAR * buf, int len, int flags)
+{
   int ret = SOCKET_ERROR;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->select(nfds, readfds, writefds, exceptfds, timeout);
+  __try{
+    if (g_pWinsockHook)
+      ret = g_pWinsockHook->recv(s, buf, len, flags);
+
+  }__except(1){
+      OutputDebugLog("AmhHook_recv Failed");
+  }
   return ret;
 }
 
-int WSAAPI send_Hook(SOCKET s, const char FAR * buf, int len, int flags) {
+int WSAAPI AmhHook_select(int nfds, fd_set FAR * readfds, fd_set FAR * writefds, fd_set FAR * exceptfds, const struct timeval FAR * timeout)
+{
   int ret = SOCKET_ERROR;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->send(s, buf, len, flags);
+  __try{
+    if (g_pWinsockHook)
+      ret = g_pWinsockHook->select(nfds, readfds, writefds, exceptfds, timeout);
+
+  }__except(1){
+      OutputDebugLog("AmhHook_select Failed");
+  }
   return ret;
 }
 
-int WSAAPI getaddrinfo_Hook(PCSTR pNodeName, PCSTR pServiceName,
-                            const ADDRINFOA * pHints, PADDRINFOA * ppResult) {
+int WSAAPI AmhHook_send(SOCKET s, const char FAR * buf, int len, int flags)
+{
+  int ret = SOCKET_ERROR;
+  __try{
+    if (g_pWinsockHook)
+      ret = g_pWinsockHook->send(s, buf, len, flags);
+
+  }__except(1){
+      OutputDebugLog("AmhHook_send Failed");
+  }
+  return ret;
+}
+
+int WSAAPI AmhHook_getaddrinfo(PCSTR pNodeName, PCSTR pServiceName,
+                            const ADDRINFOA * pHints, PADDRINFOA * ppResult)
+{
   int ret = WSAEINVAL;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->getaddrinfo(pNodeName, pServiceName,
+  __try{
+    if (g_pWinsockHook)
+      ret = g_pWinsockHook->getaddrinfo(pNodeName, pServiceName,
                              (ADDRINFOA *)pHints, ppResult);
+
+  }__except(1){
+      OutputDebugLog("AmhHook_getaddrinfo Failed");
+  }
   return ret;
 }
 
-int WSAAPI GetAddrInfoW_Hook(PCWSTR pNodeName, PCWSTR pServiceName,
-                             const ADDRINFOW * pHints, PADDRINFOW * ppResult) {
+int WSAAPI AmhHook_GetAddrInfoW(PCWSTR pNodeName, PCWSTR pServiceName,
+                             const ADDRINFOW * pHints, PADDRINFOW * ppResult)
+{
   int ret = WSAEINVAL;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->GetAddrInfoW(pNodeName, pServiceName,
+  __try{
+    if (g_pWinsockHook)
+      ret = g_pWinsockHook->GetAddrInfoW(pNodeName, pServiceName,
                               (ADDRINFOW *)pHints, ppResult);
+
+  }__except(1){
+      OutputDebugLog("AmhHook_GetAddrInfoW Failed");
+  }
   return ret;
 }
 
-struct hostent * WSAAPI gethostbyname_Hook(const char * name) {
+struct hostent * WSAAPI AmhHook_gethostbyname(const char * name)
+{
   struct hostent * ret = NULL;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->gethostbyname(name);
+  __try{
+    if (g_pWinsockHook)
+      ret = g_pWinsockHook->gethostbyname(name);
+
+  }__except(1){
+      OutputDebugLog("AmhHook_gethostbyname Failed");
+  }
   return ret;
 }
 
-int WSAAPI WSARecv_Hook(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+int WSAAPI AmhHook_WSARecv(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                         LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags,
                         LPWSAOVERLAPPED lpOverlapped,
-                      LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
+                      LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
   int ret = SOCKET_ERROR;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->WSARecv(s, lpBuffers, dwBufferCount, lpNumberOfBytesRecvd,
-                                  lpFlags, lpOverlapped, lpCompletionRoutine);
+  __try{
+
+    if (g_pWinsockHook)
+      ret = g_pWinsockHook->WSARecv(s, lpBuffers, dwBufferCount, lpNumberOfBytesRecvd, lpFlags, lpOverlapped, lpCompletionRoutine);
+
+  }__except(1){
+      OutputDebugLog("AmhHook_WSARecv Failed");
+  }
   return ret;
 }
 
-int WSAAPI WSASend_Hook(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+int WSAAPI AmhHook_WSASend(SOCKET s, LPWSABUF lpBuffers,
+                           DWORD dwBufferCount,
               LPDWORD lpNumberOfBytesSent, DWORD dwFlags,
               LPWSAOVERLAPPED lpOverlapped,
-              LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
+              LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
   int ret = SOCKET_ERROR;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->WSASend(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent,
-                          dwFlags, lpOverlapped, lpCompletionRoutine);
+  __try{
+
+    if (g_pWinsockHook)
+      ret = g_pWinsockHook->WSASend(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent,dwFlags, lpOverlapped, lpCompletionRoutine);
+  }__except(1){
+    OutputDebugLog("AmhHook_WSASend Failed");
+  }
   return ret;
 }
 
-BOOL WSAAPI WSAGetOverlappedResult_Hook(SOCKET s, LPWSAOVERLAPPED lpOverlapped,
-              LPDWORD lpcbTransfer, BOOL fWait, LPDWORD lpdwFlags) {
+BOOL WSAAPI AmhHook_WSAGetOverlappedResult(SOCKET s,
+                                  LPWSAOVERLAPPED lpOverlapped,
+              LPDWORD lpcbTransfer, BOOL fWait, LPDWORD lpdwFlags)
+{
   BOOL ret = FALSE;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->WSAGetOverlappedResult(s, lpOverlapped, lpcbTransfer, fWait,
-                                        lpdwFlags);
+  __try{
+    if (g_pWinsockHook)
+      ret = g_pWinsockHook->WSAGetOverlappedResult(s, lpOverlapped, lpcbTransfer, fWait,  lpdwFlags);
+
+  }__except(1){
+      OutputDebugLog("AmhHook_WSAGetOverlappedResult Failed");
+  }
   return ret;
 }
 
-int WSAAPI WSAEventSelect_Hook(SOCKET s, WSAEVENT hEventObject,
-                                long lNetworkEvents) {
+int WSAAPI AmhHook_WSAEventSelect(SOCKET s, WSAEVENT hEventObject,
+                                long lNetworkEvents)
+{
   int ret = SOCKET_ERROR;
-  if (g_pWinsockHook)
+  __try{
+    if (g_pWinsockHook)
     ret = g_pWinsockHook->WSAEventSelect(s, hEventObject, lNetworkEvents);
+
+  }__except(1){
+      OutputDebugLog("AmhHook_WSAEventSelect Failed");
+  }
   return ret;
 }
 
-int WSAAPI WSAEnumNetworkEvents_Hook(SOCKET s, WSAEVENT hEventObject,
-                            LPWSANETWORKEVENTS lpNetworkEvents) {
+int WSAAPI AmhHook_WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEventObject,
+                            LPWSANETWORKEVENTS lpNetworkEvents)
+{
   int ret = SOCKET_ERROR;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->WSAEnumNetworkEvents(s, hEventObject, lpNetworkEvents);
+  __try{
+
+    if (g_pWinsockHook)
+      ret = g_pWinsockHook->WSAEnumNetworkEvents(s, hEventObject, lpNetworkEvents);
+  }__except(1){
+      OutputDebugLog("AmhHook_WSAEnumNetworkEvents Failed");
+  }
   return ret;
 }
 
-int WSAAPI GetAddrInfoExA_Hook(PCSTR pName, PCSTR pServiceName, DWORD dwNameSpace,
+int WSAAPI AmhHook_GetAddrInfoExA(PCSTR pName, PCSTR pServiceName,
+    DWORD dwNameSpace,
     LPGUID lpNspId, const ADDRINFOEXA *hints, PADDRINFOEXA *ppResult,
     struct timeval *timeout, LPOVERLAPPED lpOverlapped,
     LPLOOKUPSERVICE_COMPLETION_ROUTINE lpCompletionRoutine,
-    LPHANDLE lpNameHandle) {
+    LPHANDLE lpNameHandle)
+{
   int ret = EAI_FAIL;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->GetAddrInfoExA(pName, pServiceName, dwNameSpace, lpNspId,
-        (ADDRINFOEXA *)hints, ppResult, timeout, lpOverlapped,
-        lpCompletionRoutine, lpNameHandle);
+  __try{
+
+    if (g_pWinsockHook)
+      ret = g_pWinsockHook->GetAddrInfoExA(pName, pServiceName, dwNameSpace, lpNspId, (ADDRINFOEXA *)hints, ppResult, timeout, lpOverlapped, lpCompletionRoutine, lpNameHandle);
+  }__except(1){
+      OutputDebugLog("AmhHook_GetAddrInfoExA Failed");
+  }
   return ret;
 }
 
-int WSAAPI GetAddrInfoExW_Hook(PCWSTR pName, PCWSTR pServiceName, DWORD dwNameSpace,
+int WSAAPI AmhHook_GetAddrInfoExW(PCWSTR pName, PCWSTR pServiceName, DWORD dwNameSpace,
     LPGUID lpNspId, const ADDRINFOEXW *hints, PADDRINFOEXW *ppResult,
     struct timeval *timeout, LPOVERLAPPED lpOverlapped,
     LPLOOKUPSERVICE_COMPLETION_ROUTINE lpCompletionRoutine,
-    LPHANDLE lpHandle) {
+    LPHANDLE lpHandle)
+{
   int ret = EAI_FAIL;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->GetAddrInfoExW(pName, pServiceName, dwNameSpace, lpNspId,
+  __try{
+
+    if (g_pWinsockHook)
+      ret = g_pWinsockHook->GetAddrInfoExW(pName, pServiceName, dwNameSpace, lpNspId,
         (ADDRINFOEXW *)hints, ppResult, timeout, lpOverlapped,
         lpCompletionRoutine, lpHandle);
+  }__except(1){
+      OutputDebugLog("AmhHook_GetAddrInfoExW Failed");
+  }
   return ret;
 }
 
-PTP_IO WINAPI CreateThreadpoolIo_Hook(HANDLE fl,
+PTP_IO WINAPI AmhHook_CreateThreadpoolIo(HANDLE fl,
     PTP_WIN32_IO_CALLBACK_WPT pfnio, PVOID pv, PTP_CALLBACK_ENVIRON pcbe) {
   PTP_IO ret = NULL;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->CreateThreadpoolIo(fl, pfnio, pv, pcbe, false);
+  __try{
+    if (g_pWinsockHook)
+      ret = g_pWinsockHook->CreateThreadpoolIo(fl, pfnio, pv, pcbe, false);
+  }__except(1){
+      OutputDebugLog("AmhHook_CreateThreadpoolIo Failed");
+  }
   return ret;
 }
 
-PTP_IO WINAPI CreateThreadpoolIo_base_Hook(HANDLE fl,
+PTP_IO WINAPI AmhHook_CreateThreadpoolIo_base(HANDLE fl,
     PTP_WIN32_IO_CALLBACK_WPT pfnio, PVOID pv, PTP_CALLBACK_ENVIRON pcbe) {
   PTP_IO ret = NULL;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->CreateThreadpoolIo(fl, pfnio, pv, pcbe, true);
+  __try{
+    if (g_pWinsockHook)
+      ret = g_pWinsockHook->CreateThreadpoolIo(fl, pfnio, pv, pcbe, true);
+  }__except(1){
+      OutputDebugLog("AmhHook_CreateThreadpoolIo_base Failed");
+  }
   return ret;
 }
 
-void WINAPI CloseThreadpoolIo_Hook(PTP_IO pio) {
-  if (g_pWinsockHook)
-    g_pWinsockHook->CloseThreadpoolIo(pio, false);
+void WINAPI AmhHook_CloseThreadpoolIo(PTP_IO pio) {
+  __try{
+    if (g_pWinsockHook)
+      g_pWinsockHook->CloseThreadpoolIo(pio, false);
+  }__except(1){
+      OutputDebugLog("AmhHook_CloseThreadpoolIo Failed");
+  }
 }
 
-void WINAPI CloseThreadpoolIo_base_Hook(PTP_IO pio) {
-  if (g_pWinsockHook)
-    g_pWinsockHook->CloseThreadpoolIo(pio, true);
+void WINAPI AmhHook_CloseThreadpoolIo_base(PTP_IO pio) {
+  __try{
+    if (g_pWinsockHook)
+      g_pWinsockHook->CloseThreadpoolIo(pio, true);
+  }__except(1){
+      OutputDebugLog("AmhHook_CloseThreadpoolIo_base Failed");
+  }
 }
 
-void WINAPI StartThreadpoolIo_Hook(PTP_IO pio) {
-  if (g_pWinsockHook)
-    g_pWinsockHook->StartThreadpoolIo(pio, false);
+void WINAPI AmhHook_StartThreadpoolIo(PTP_IO pio) {
+  __try{
+    if (g_pWinsockHook)
+      g_pWinsockHook->StartThreadpoolIo(pio, false);
+  }__except(1){
+      OutputDebugLog("AmhHook_StartThreadpoolIo Failed");
+  }
 }
 
-void WINAPI StartThreadpoolIo_base_Hook(PTP_IO pio) {
+void WINAPI AmhHook_StartThreadpoolIo_base(PTP_IO pio)
+{
+  __try{
   if (g_pWinsockHook)
     g_pWinsockHook->StartThreadpoolIo(pio, true);
+}__except(1){
+    OutputDebugLog("AmhHook_StartThreadpoolIo_base Failed");
 }
 
-int WSAAPI WSAIoctl_Hook(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
-  DWORD cbInBuffer, LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+}
+
+int WSAAPI AmhHook_WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer, LPVOID lpvOutBuffer, DWORD cbOutBuffer,
   LPDWORD lpcbBytesReturned, LPWSAOVERLAPPED lpOverlapped,
-  LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
+  LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
   int ret = SOCKET_ERROR;
-  if (g_pWinsockHook)
-    ret = g_pWinsockHook->WSAIoctl(s, dwIoControlCode, lpvInBuffer, cbInBuffer,
-                          lpvOutBuffer, cbOutBuffer, lpcbBytesReturned,
-                          lpOverlapped, lpCompletionRoutine);
+  __try{
+    if (g_pWinsockHook)
+    ret = g_pWinsockHook->WSAIoctl(s, dwIoControlCode, lpvInBuffer, cbInBuffer, lpvOutBuffer, cbOutBuffer, lpcbBytesReturned, lpOverlapped, lpCompletionRoutine);
+
+  }__except(1){
+      OutputDebugLog("AmhHook_WSAIoctl Failed");
+  }
   return ret;
 }
 
 /******************************************************************************
 *******************************************************************************
-**													                                    						 **
-**			            					CWSHook Class				                  				 **
-**															                                    				 **
+**                                                                           **
+**                            CWSHook Class                                   **
+**                                                                           **
 *******************************************************************************
 ******************************************************************************/
 
@@ -372,53 +486,53 @@ void CWinsockHook::Init()
 {
   if (g_pWinsockHook || _hook)
     return;
-  
+
   _hook = new NCodeHookIA32();
     g_pWinsockHook = this;
 
     // install the code hooks
   _WSASocketW = _hook->createHookByName("ws2_32.dll", "WSASocketW",
-                                      WSASocketW_Hook);
+                                      AmhHook_WSASocketW);
   _closesocket = _hook->createHookByName("ws2_32.dll", "closesocket",
-                                       closesocket_Hook);
-  _connect = _hook->createHookByName("ws2_32.dll", "connect", connect_Hook);
-  _recv = _hook->createHookByName("ws2_32.dll", "recv", recv_Hook);
-  _send = _hook->createHookByName("ws2_32.dll", "send", send_Hook);
-  _select = _hook->createHookByName("ws2_32.dll", "select", select_Hook);
+                                       AmhHook_closesocket);
+  _connect = _hook->createHookByName("ws2_32.dll", "connect", AmhHook_connect);
+  _recv = _hook->createHookByName("ws2_32.dll", "recv", AmhHook_recv);
+  _send = _hook->createHookByName("ws2_32.dll", "send", AmhHook_send);
+  _select = _hook->createHookByName("ws2_32.dll", "select", AmhHook_select);
   _GetAddrInfoW = _hook->createHookByName("ws2_32.dll", "GetAddrInfoW",
-                                        GetAddrInfoW_Hook);
+                                        AmhHook_GetAddrInfoW);
   _gethostbyname = _hook->createHookByName("ws2_32.dll", "gethostbyname",
-                                         gethostbyname_Hook);
+                                         AmhHook_gethostbyname);
   _GetAddrInfoExA = _hook->createHookByName("ws2_32.dll", "GetAddrInfoExA",
-                                          GetAddrInfoExA_Hook);
+                                          AmhHook_GetAddrInfoExA);
   _GetAddrInfoExW = _hook->createHookByName("ws2_32.dll", "GetAddrInfoExW",
-                                          GetAddrInfoExW_Hook);
-  _WSARecv = _hook->createHookByName("ws2_32.dll", "WSARecv", WSARecv_Hook);
-  _WSASend = _hook->createHookByName("ws2_32.dll", "WSASend", WSASend_Hook);
+                                          AmhHook_GetAddrInfoExW);
+  _WSARecv = _hook->createHookByName("ws2_32.dll", "WSARecv", AmhHook_WSARecv);
+  _WSASend = _hook->createHookByName("ws2_32.dll", "WSASend", AmhHook_WSASend);
   _WSAGetOverlappedResult = _hook->createHookByName("ws2_32.dll",
-      "WSAGetOverlappedResult", WSAGetOverlappedResult_Hook);
+      "WSAGetOverlappedResult", AmhHook_WSAGetOverlappedResult);
   _WSAEventSelect = _hook->createHookByName("ws2_32.dll", "WSAEventSelect",
-                                          WSAEventSelect_Hook);
+                                          AmhHook_WSAEventSelect);
   _WSAEnumNetworkEvents = _hook->createHookByName("ws2_32.dll",
-      "WSAEnumNetworkEvents", WSAEnumNetworkEvents_Hook);
+      "WSAEnumNetworkEvents", AmhHook_WSAEnumNetworkEvents);
   _CreateThreadpoolIo = _hook->createHookByName("kernel32.dll",
-      "CreateThreadpoolIo", CreateThreadpoolIo_Hook);
+      "CreateThreadpoolIo", AmhHook_CreateThreadpoolIo);
   _CreateThreadpoolIo_base = _hook->createHookByName("kernelbase.dll",
-      "CreateThreadpoolIo", CreateThreadpoolIo_base_Hook);
+      "CreateThreadpoolIo", AmhHook_CreateThreadpoolIo_base);
   _CloseThreadpoolIo = _hook->createHookByName("kernelbase.dll",
-      "CloseThreadpoolIo", CloseThreadpoolIo_Hook);
+      "CloseThreadpoolIo", AmhHook_CloseThreadpoolIo);
   _CloseThreadpoolIo_base = _hook->createHookByName("kernel32.dll",
-      "CloseThreadpoolIo", CloseThreadpoolIo_base_Hook);
+      "CloseThreadpoolIo", AmhHook_CloseThreadpoolIo_base);
   _StartThreadpoolIo = _hook->createHookByName("kernelbase.dll",
-      "StartThreadpoolIo", StartThreadpoolIo_Hook);
+      "StartThreadpoolIo", AmhHook_StartThreadpoolIo);
   _StartThreadpoolIo_base = _hook->createHookByName("kernel32.dll",
-      "StartThreadpoolIo", StartThreadpoolIo_base_Hook);
-  _WSAIoctl = _hook->createHookByName("ws2_32.dll", "WSAIoctl", WSAIoctl_Hook);
+      "StartThreadpoolIo", AmhHook_StartThreadpoolIo_base);
+  _WSAIoctl = _hook->createHookByName("ws2_32.dll", "WSAIoctl", AmhHook_WSAIoctl);
 
   // only hook the A version if the W version wasn't present (XP SP1 or below)
   if (!_GetAddrInfoW)
     _getaddrinfo = _hook->createHookByName("ws2_32.dll", "getaddrinfo",
-                                         getaddrinfo_Hook);
+                                         AmhHook_getaddrinfo);
 
 }
 
@@ -594,7 +708,7 @@ BOOL CWinsockHook::ConnectEx(SOCKET s, const struct sockaddr FAR *name, int name
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-int	CWinsockHook::recv(SOCKET s, char FAR * buf, int len, int flags) {
+int  CWinsockHook::recv(SOCKET s, char FAR * buf, int len, int flags) {
   int ret = SOCKET_ERROR;
   if (_recv)
     ret = _recv(s, buf, len, flags);
@@ -616,7 +730,7 @@ int	CWinsockHook::recv(SOCKET s, char FAR * buf, int len, int flags) {
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-int	CWinsockHook::WSARecv(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+int  CWinsockHook::WSARecv(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                      LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags,
                      LPWSAOVERLAPPED lpOverlapped,
                      LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
@@ -785,7 +899,7 @@ int CWinsockHook::select(int nfds, fd_set FAR * readfds, fd_set FAR * writefds,
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-int	CWinsockHook::getaddrinfo(PCSTR pNodeName, PCSTR pServiceName,
+int  CWinsockHook::getaddrinfo(PCSTR pNodeName, PCSTR pServiceName,
                          ADDRINFOA * pHints, PADDRINFOA * ppResult) {
   int ret = WSAEINVAL;
   CString name = CA2T(pNodeName);
@@ -829,7 +943,7 @@ int	CWinsockHook::getaddrinfo(PCSTR pNodeName, PCSTR pServiceName,
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-int	CWinsockHook::GetAddrInfoW(PCWSTR pNodeName, PCWSTR pServiceName,
+int  CWinsockHook::GetAddrInfoW(PCWSTR pNodeName, PCWSTR pServiceName,
                           ADDRINFOW * pHints, PADDRINFOW * ppResult) {
   int ret = WSAEINVAL;
   CString name = CW2T(pNodeName);
@@ -1248,7 +1362,7 @@ int CWinsockHook::WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
       LPFN_CONNECTEX_WPT connect_ex;
       memcpy(&connect_ex, lpvOutBuffer, sizeof(LPFN_CONNECTEX_WPT));
       _connectex_functions.SetAt(s, connect_ex);
-      LPFN_CONNECTEX_WPT connect_ex_hook = ConnectEx_Hook;
+      LPFN_CONNECTEX_WPT connect_ex_hook = AmhHook_ConnectEx;
       memcpy(lpvOutBuffer, &connect_ex_hook, sizeof(LPFN_CONNECTEX_WPT));
     }
   }

@@ -76,10 +76,10 @@ public:
 typedef VOID (WINAPI *PTP_WIN32_IO_CALLBACK_WPT)(
     PTP_CALLBACK_INSTANCE Instance, PVOID Context, PVOID Overlapped,
     ULONG IoResult, ULONG_PTR NumberOfBytesTransferred, PTP_IO Io);
-typedef PTP_IO(__stdcall *LPFN_CREATETHREADPOOLIO)(HANDLE fl,
+typedef PTP_IO(WINAPI *LPFN_CREATETHREADPOOLIO)(HANDLE fl,
     PTP_WIN32_IO_CALLBACK_WPT pfnio, PVOID pv, PTP_CALLBACK_ENVIRON pcbe);
-typedef VOID(__stdcall *LPFN_CLOSETHREADPOOLIO)(PTP_IO pio);
-typedef VOID(__stdcall *LPFN_STARTTHREADPOOLIO)(PTP_IO pio);
+typedef VOID(WINAPI *LPFN_CLOSETHREADPOOLIO)(PTP_IO pio);
+typedef VOID(WINAPI *LPFN_STARTTHREADPOOLIO)(PTP_IO pio);
 typedef BOOL(PASCAL FAR * LPFN_CONNECTEX_WPT) (SOCKET s,
     const struct sockaddr FAR *name, int namelen, PVOID lpSendBuffer,
     DWORD dwSendDataLength, LPDWORD lpdwBytesSent, LPOVERLAPPED lpOverlapped);

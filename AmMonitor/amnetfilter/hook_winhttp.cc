@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include "mhookwinhttp.h"
+#include "hook_winhttp.h"
 #include "shared_mem.h"
 #include "zcdbg.h"
 
@@ -12,7 +12,7 @@ HINTERNET WINAPI AmhHook_WinHttpOpen(LPCWSTR lpszAgent, DWORD dwAccessType, LPCW
 
   if(shared_proxy_enabled)
   {
-    lpszProxy = _T("http://127.0.0.1:8888");
+    lpszProxy = shared_proxy_inetW;
     dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
   }
   //
@@ -130,13 +130,9 @@ void CWinHttpHook::Destroy()
     mhook = NULL;
   }
 
-  _InternetOpenW = NULL;
-  _InternetOpenA = NULL;
-  _InternetConnectW = NULL;
-  _InternetConnectA = NULL;
 
-  _InternetOpen = NULL;
-  _InternetConnect = NULL;
+  _WinHttpOpen = NULL;
+  _WinHttpConnect = NULL;
 
   _WinHttpOpenRequest = NULL;
   _WinHttpGetProxyForUrl = NULL;
