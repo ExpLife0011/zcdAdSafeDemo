@@ -26,34 +26,29 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-/*-----------------------------------------------------------------------------
-  Shared memory by the DLL loaded into both processes
------------------------------------------------------------------------------*/
+#pragma once
 
-extern HHOOK shared_hook_handle;
-extern WCHAR  shared_results_file_base[MAX_PATH];
-extern DWORD  shared_test_timeout;
-extern bool   shared_cleared_cache;
-extern DWORD  shared_current_run;
-extern int    shared_cpu_utilization;
-extern bool   shared_has_gpu;
-extern int    shared_result;
-extern WCHAR  shared_browser_exe[MAX_PATH];
-extern DWORD  shared_browser_process_id;
+#ifdef WPTDRIVER
+#define SHARED_EXPFUNC __declspec( dllimport )
+#define SHARED_API 
+#else
+#define SHARED_EXPFUNC __declspec( dllexport )
+#define SHARED_API 
+#endif
 
-extern HHOOK global_hCallwndHook;
-
-extern int g_bSubclassed; // START button subclassed?
-extern HWND g_hWnd;  // handle of START button
-extern HHOOK g_hKbHook;
-extern HHOOK g_hCallwndHook ;
-
-extern UINT WM_AMMONITOR;
-extern UINT WM_AMMONITORRET;
-extern TCHAR const GUID_HOOKMSG[_MAX_PATH] ;
-extern TCHAR const GUID_HOOKMSGRET[_MAX_PATH] ;
-
-extern bool shared_proxy_enabled ;
-extern char shared_proxy_ip[_MAX_PATH];
-extern int shared_proxy_port;
-extern int shared_client_port;
+extern "C" {
+SHARED_EXPFUNC void SHARED_API InstallHook(void);
+SHARED_EXPFUNC void SHARED_API SetResultsFileBase(const WCHAR * file_base);
+SHARED_EXPFUNC void SHARED_API SetTestTimeout(DWORD timeout);
+SHARED_EXPFUNC void SHARED_API SetClearedCache(bool cleared_cache);
+SHARED_EXPFUNC bool SHARED_API GetClearedCache();
+SHARED_EXPFUNC void SHARED_API SetCurrentRun(DWORD run);
+SHARED_EXPFUNC void SHARED_API SetDebugLevel(int level, const WCHAR * log_file);
+SHARED_EXPFUNC int  SHARED_API GetCPUUtilization();
+SHARED_EXPFUNC void SHARED_API SetCPUUtilization(int utilization);
+SHARED_EXPFUNC void SHARED_API SetHasGPU(bool has_gpu);
+SHARED_EXPFUNC void SHARED_API ResetTestResult();
+SHARED_EXPFUNC int  SHARED_API GetTestResult();
+SHARED_EXPFUNC void SHARED_API SetBrowserExe(const WCHAR * exe);
+SHARED_EXPFUNC DWORD SHARED_API GetBrowserProcessId();
+}

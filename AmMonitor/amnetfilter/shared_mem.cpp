@@ -28,7 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "stdafx.h"
 #include "shared_mem.h"
-//#include "wpthook_dll.h"
+#include "shared_func.h"
 
 #pragma once
 
@@ -50,11 +50,16 @@ HHOOK global_hCallwndHook = NULL;
 int  g_bSubclassed = 0; // START button subclassed?
 HWND g_hWnd = 0;  // handle of START button
 HHOOK g_hKbHook = NULL;
-bool shared_proxy_enabled = true;
 
 WCHAR shared_browser_exe[MAX_PATH] = {NULL};
 DWORD shared_browser_process_id = 0;
 const TCHAR shared_app_exe[] = _T("AmMonitor.dll");
+
+bool shared_proxy_enabled = true;
+char shared_proxy_ip[MAX_PATH] = "127.0.0.1";
+int shared_proxy_port = 8888;
+int shared_client_port = 80;
+
 
 HHOOK shared_hook_handle = 0;
 WCHAR shared_results_file_base[MAX_PATH] = {NULL};
@@ -75,76 +80,76 @@ int   shared_result = -1;
 /*-----------------------------------------------------------------------------
   Set the base file name to use for results files
 -----------------------------------------------------------------------------*/
-void WINAPI SetResultsFileBase(const WCHAR * file_base) {
+void SHARED_API SetResultsFileBase(const WCHAR * file_base) {
   lstrcpyW(shared_results_file_base, file_base);
 }
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-void WINAPI SetTestTimeout(DWORD timeout) {
+void SHARED_API SetTestTimeout(DWORD timeout) {
   shared_test_timeout = timeout;
 }
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-void WINAPI SetClearedCache(bool cleared_cache) {
+void SHARED_API SetClearedCache(bool cleared_cache) {
   shared_cleared_cache = cleared_cache;
 }
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-bool WINAPI GetClearedCache() {
+bool SHARED_API GetClearedCache() {
   return shared_cleared_cache;
 }
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-void WINAPI SetCurrentRun(DWORD run) {
+void SHARED_API SetCurrentRun(DWORD run) {
   shared_current_run = run;
 }
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-void WINAPI SetHasGPU(bool has_gpu) {
+void SHARED_API SetHasGPU(bool has_gpu) {
   shared_has_gpu = has_gpu;
 }
 
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-void WINAPI SetDebugLevel(int level, const WCHAR * log_file) {
+void SHARED_API SetDebugLevel(int level, const WCHAR * log_file) {
   shared_debug_level = level;
   lstrcpyW(shared_log_file, log_file);
 }
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-int WINAPI GetCPUUtilization() {
+int SHARED_API GetCPUUtilization() {
   return shared_cpu_utilization;
 }
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-void WINAPI SetCPUUtilization(int utilization) {
+void SHARED_API SetCPUUtilization(int utilization) {
   shared_cpu_utilization = utilization;
 }
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-void WINAPI ResetTestResult() {
+void SHARED_API ResetTestResult() {
   shared_result = -1;
 }
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-int WINAPI GetTestResult() {
+int SHARED_API GetTestResult() {
   return shared_result;
 }
 
 /*-----------------------------------------------------------------------------
   Set the exe name for the browser we are currently using
 -----------------------------------------------------------------------------*/
-void WINAPI SetBrowserExe(const WCHAR * exe) {
+void SHARED_API SetBrowserExe(const WCHAR * exe) {
   if (exe)
     lstrcpyW(shared_browser_exe, exe);
   else
@@ -154,6 +159,6 @@ void WINAPI SetBrowserExe(const WCHAR * exe) {
 
 /*-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------*/
-DWORD WINAPI GetBrowserProcessId() {
+DWORD SHARED_API GetBrowserProcessId() {
   return shared_browser_process_id;
 }

@@ -70,8 +70,11 @@ BEGIN_MESSAGE_MAP(CAmMonitorDlg, CDialogEx)
   ON_BN_CLICKED(IDC_BUTTON_INSTALL, &CAmMonitorDlg::OnBnClickedButtonInstall)
   ON_BN_CLICKED(IDC_BUTTON_UNINSTALL, &CAmMonitorDlg::OnBnClickedButtonUninstall)
   ON_BN_CLICKED(IDC_BUTTON_REMOTEI, &CAmMonitorDlg::OnBnClickedButtonRemotei)
-  ON_BN_CLICKED(IDC_BUTTON_INSTALL_IE, &CAmMonitorDlg::OnBnClickedButtonInstallIe)
-  ON_BN_CLICKED(IDC_BUTTON_UNINSTALL_IE, &CAmMonitorDlg::OnBnClickedButtonUninstallIe)
+  ON_BN_CLICKED(IDC_BUTTON_INSTALL_IE8, &CAmMonitorDlg::OnBnClickedButtonInstallIe8)
+  ON_BN_CLICKED(IDC_BUTTON_UNINSTALL_IE8, &CAmMonitorDlg::OnBnClickedButtonUninstallIe8)
+  ON_BN_CLICKED(IDC_BUTTON_INSTALL_IE11, &CAmMonitorDlg::OnBnClickedButtonInstallIe11)
+  ON_BN_CLICKED(IDC_BUTTON_UNINSTALL_IE11, &CAmMonitorDlg::OnBnClickedButtonUninstallIe11)
+  ON_BN_CLICKED(IDC_BUTTON1, &CAmMonitorDlg::OnBnClickedButton1)
 END_MESSAGE_MAP()
 
 
@@ -259,7 +262,7 @@ void CAmMonitorDlg::OnBnClickedButtonRemotei()
 }
 
 
-void CAmMonitorDlg::OnBnClickedButtonInstallIe()
+void CAmMonitorDlg::OnBnClickedButtonInstallIe8()
 {
   // TODO: 在此添加控件通知处理程序代码
   
@@ -268,10 +271,54 @@ void CAmMonitorDlg::OnBnClickedButtonInstallIe()
 }
 
 
-void CAmMonitorDlg::OnBnClickedButtonUninstallIe()
+void CAmMonitorDlg::OnBnClickedButtonUninstallIe8()
 {
   // TODO: 在此添加控件通知处理程序代码
   
   UINT WM_HOOKEX = ::RegisterWindowMessage(_T("WM_AMMONITOR_RK" ));
    KGEnumProcSendMessageIE(WM_HOOKEX,1,0);
+}
+
+
+void CAmMonitorDlg::OnBnClickedButtonInstallIe11()
+{
+  // TODO: 在此添加控件通知处理程序代码
+  UINT WM_HOOKEX = ::RegisterWindowMessage(_T("WM_AMMONITOR_RK" ));
+   KGEnumProcSendMessageIE(WM_HOOKEX,1,1);
+}
+
+
+void CAmMonitorDlg::OnBnClickedButtonUninstallIe11()
+{
+  // TODO: 在此添加控件通知处理程序代码
+  UINT WM_HOOKEX = ::RegisterWindowMessage(_T("WM_AMMONITOR_RK" ));
+   KGEnumProcSendMessageIE(WM_HOOKEX,1,0);
+}
+
+#include <ws2spi.h>
+#include <mswsock.h>
+typedef LPWSPSTARTUP LPFN_WSPStartup;
+//typedef int (* LPFN_WSPStartup) ( WORD wVersionRequested,
+//LPWSPDATAW lpWSPData,
+//LPWSAPROTOCOL_INFOW lpProtocolInfo,
+//WSPUPCALLTABLE UpcallTable,
+//LPWSPPROC_TABLE lpProcTable );
+
+void CAmMonitorDlg::OnBnClickedButton1()
+{
+  // TODO: 在此添加控件通知处理程序代码
+  HINSTANCE hDll = NULL;
+  hDll = ::LoadLibrary(_T("mswsock.dll"));
+  LPFN_WSPStartup funcStartup=0;
+  funcStartup = (LPFN_WSPStartup)::GetProcAddress(hDll,"WSPStartup");
+
+  LPBYTE p = (LPBYTE)funcStartup;
+  CString s;
+  s.Format(_T("[%0x,%0x,%0x,%0x][%0x,%0x,%0x,%0x]"),p[0],p[1],p[2],p[3],p[4],p[5],p[6],p[7]);
+
+  ::OutputDebugString(s);
+
+  FreeLibrary(hDll);
+ 
+
 }
