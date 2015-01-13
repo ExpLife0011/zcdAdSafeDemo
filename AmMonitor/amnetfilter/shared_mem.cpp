@@ -44,11 +44,9 @@ UINT WM_AMMONITOR = 0;
 const TCHAR GUID_HOOKMSG[_MAX_PATH] = {_T("WM_AMMONITOR_RK" )};
 UINT WM_AMMONITORRET = 0;
 const TCHAR GUID_HOOKMSGRET[_MAX_PATH] = {_T("WM_AMMONITOR_RET" )};
+
 //所有进程都要访问，且hook一次就行
 HHOOK global_hCallwndHook = NULL;
-
-int  g_bSubclassed = 0; // START button subclassed?
-HWND g_hWnd = 0;  // handle of START button
 HHOOK g_hKbHook = NULL;
 
 WCHAR shared_browser_exe[MAX_PATH] = {NULL};
@@ -59,7 +57,8 @@ bool shared_proxy_enabled = true;
 char shared_proxy_ip[MAX_PATH] = "127.0.0.1";
 int shared_proxy_port = 8888;
 int shared_client_port = 80;
-
+char shared_proxy_inetA[_MAX_PATH] = "http://127.0.0.1:8888";
+WCHAR shared_proxy_inetW[_MAX_PATH] = L"http://127.0.0.1:8888";
 
 HHOOK shared_hook_handle = 0;
 WCHAR shared_results_file_base[MAX_PATH] = {NULL};
@@ -75,6 +74,10 @@ int   shared_result = -1;
 
 #pragma comment(linker,"/SECTION:.SharedDataName,RWS")
 
+void SHARED_API SetProxyEnabled(bool enable)
+{
+  shared_proxy_enabled = enable;
+}
 
 
 /*-----------------------------------------------------------------------------

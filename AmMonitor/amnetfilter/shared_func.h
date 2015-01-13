@@ -37,7 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 extern "C" {
-SHARED_EXPFUNC void SHARED_API InstallHook(void);
+SHARED_EXPFUNC void SHARED_API SetProxyEnabled(bool enable);
+
 SHARED_EXPFUNC void SHARED_API SetResultsFileBase(const WCHAR * file_base);
 SHARED_EXPFUNC void SHARED_API SetTestTimeout(DWORD timeout);
 SHARED_EXPFUNC void SHARED_API SetClearedCache(bool cleared_cache);

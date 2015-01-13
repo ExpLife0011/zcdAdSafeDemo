@@ -42,11 +42,7 @@ extern WCHAR  shared_browser_exe[MAX_PATH];
 extern DWORD  shared_browser_process_id;
 
 extern HHOOK global_hCallwndHook;
-
-extern int g_bSubclassed; // START button subclassed?
-extern HWND g_hWnd;  // handle of START button
 extern HHOOK g_hKbHook;
-extern HHOOK g_hCallwndHook ;
 
 extern UINT WM_AMMONITOR;
 extern UINT WM_AMMONITORRET;
@@ -57,3 +53,6 @@ extern bool shared_proxy_enabled ;
 extern char shared_proxy_ip[_MAX_PATH];
 extern int shared_proxy_port;
 extern int shared_client_port;
+extern char shared_proxy_inetA[_MAX_PATH];
+extern WCHAR shared_proxy_inetW[_MAX_PATH];
+

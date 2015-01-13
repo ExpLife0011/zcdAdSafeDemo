@@ -10,20 +10,23 @@ bool IsCorrectBrowserProcess(LPCTSTR exe)
   bool ok = false;
 
 
-    if (!lstrcmpi(exe, _T("chrome.exe"))) {
-        ok = true;
-    } else if (!lstrcmpi(exe, _T("firefox.exe"))) {
-        ok = true;
-    } else if (!lstrcmpi(exe, _T("iexplore.exe"))) {
-      ok = true;
-    } else if (!lstrcmpi(exe, shared_browser_exe))
+  if (!lstrcmpi(exe, _T("chrome.exe"))) {
+    ok = true;
+  } else if (!lstrcmpi(exe, _T("sogou.exe"))) {
+    ok = true;
+  } else if (!lstrcmpi(exe, _T("iexplore.exe"))) {
+    ok = true;
+  } else if (!lstrcmpi(exe, shared_browser_exe))
   {
-  } 
+  }
 
   return ok;
 }
 
+int GetBrowserVersion(LPCTSTR exe)
+{
 
+}
 
 BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) 
 { 

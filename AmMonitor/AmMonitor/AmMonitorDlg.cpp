@@ -75,6 +75,8 @@ BEGIN_MESSAGE_MAP(CAmMonitorDlg, CDialogEx)
   ON_BN_CLICKED(IDC_BUTTON_INSTALL_IE11, &CAmMonitorDlg::OnBnClickedButtonInstallIe11)
   ON_BN_CLICKED(IDC_BUTTON_UNINSTALL_IE11, &CAmMonitorDlg::OnBnClickedButtonUninstallIe11)
   ON_BN_CLICKED(IDC_BUTTON1, &CAmMonitorDlg::OnBnClickedButton1)
+  ON_BN_CLICKED(IDC_BUTTON2, &CAmMonitorDlg::OnBnClickedButton2)
+  ON_BN_CLICKED(IDC_BUTTON3, &CAmMonitorDlg::OnBnClickedButton3)
 END_MESSAGE_MAP()
 
 
@@ -321,4 +323,34 @@ void CAmMonitorDlg::OnBnClickedButton1()
   FreeLibrary(hDll);
  
 
+}
+
+//void SHARED_API SetProxyEnabled(bool enable)
+void CAmMonitorDlg::OnBnClickedButton2()
+{
+  // TODO: 在此添加控件通知处理程序代码
+  typedef void (*ENABLE)(bool );
+  ENABLE functmp = NULL;
+
+  functmp=(ENABLE)::GetProcAddress (g_hFilterInst,"SetProxyEnabled");
+  if(functmp)
+  {
+      functmp(false);
+  }
+
+}
+
+
+
+void CAmMonitorDlg::OnBnClickedButton3()
+{
+  // TODO: 在此添加控件通知处理程序代码
+  typedef void (*ENABLE)(bool );
+  ENABLE functmp = NULL;
+
+  functmp=(ENABLE)::GetProcAddress (g_hFilterInst,"SetProxyEnabled");
+  if(functmp)
+  {
+      functmp(true);
+  }
 }

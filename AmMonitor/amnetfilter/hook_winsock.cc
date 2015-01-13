@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "StdAfx.h"
 #include "hook_winsock.h"
-#include "util.h"
+#include "zcdbg.h"
 //#include "request.h"
 //#include "track_dns.h"
 //#include "track_sockets.h"

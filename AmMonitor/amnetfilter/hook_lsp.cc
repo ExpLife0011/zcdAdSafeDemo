@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "hook_lsp.h"
-#include "util.h"
+#include "zcdbg.h"
 
 static CWinHttpHook * gs_pWinHttpHook = NULL;
 

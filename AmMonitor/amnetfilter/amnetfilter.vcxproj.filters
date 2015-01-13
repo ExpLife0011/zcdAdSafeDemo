@@ -39,9 +39,6 @@
     <ClCompile Include="wpthook.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="util.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="shared_mem.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -58,6 +55,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="helper.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="zcdbg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -80,13 +80,13 @@
     <ClInclude Include="wpthook.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="util.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="shared_mem.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="helper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="zcdbg.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

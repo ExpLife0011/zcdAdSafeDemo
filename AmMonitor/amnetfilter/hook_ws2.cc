@@ -30,8 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "StdAfx.h"
 #include "hook_ws2.h"
-#include "util.h"
-//#include "shared_mem.h"
+#include "zcdbg.h"
+#include "shared_mem.h"
 
 #pragma comment(lib, "ws2_32.lib")
 #define INCL_WINSOCK_API_TYPEDEFS 1
@@ -51,84 +51,77 @@ CWs2Hook * g_pWsHook = NULL;
 ******************************************************************************/
 
 
-static int WSAAPI  AmhConnectHook(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
+static int WSAAPI  AmhHook_Connect(IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
 {
 
-  WriteAGLog("connect_AGHook Begin");
+  OutputDebugLog("Amhook_connect Begin");
   int ret = SOCKET_ERROR;
-//if (g_pWsHook)
-//  ret = g_pWsHook->connect(s, name, namelen);
-//  return ret;
 
   __try{
     if(g_pWsHook)
     {
-      WriteAGLog("...");
-      BOOL bMark = FALSE;
+      OutputDebugLog("...");
+
+      bool bUseOrignalFuncData = false;
       if (name!=NULL)
       {
-          WriteAGLog(".1A");
-        sockaddr_in sin;
+        OutputDebugLog(".1A");
+        SOCKADDR_IN sin;
         memcpy(&sin, &name, sizeof(sin));
 
-        WriteAGLog(".1B");
+        OutputDebugLog(".1B");
         if(sin.sin_port==htons(9222))
         {
-          bMark = TRUE;
+          bUseOrignalFuncData = true;
         }
       }
-      WriteAGLog(".1C");
-      SOCKADDR_IN stSvrAddrIn = {0};
-      stSvrAddrIn.sin_family = AF_INET;
-      stSvrAddrIn.sin_port = htons(8888);
-      stSvrAddrIn.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+      if(!shared_proxy_enabled) bUseOrignalFuncData = true;
+
+      OutputDebugLog(".1C");
       //if(!shared_proxy_enabled) bMark = TRUE;
-      WriteAGLog(".1F");
-      if (bMark)
+      if (bUseOrignalFuncData)
       {
-          WriteAGLog(".2A");
+        OutputDebugLog(".2A");
         ret = g_pWsHook->connect(s, name, namelen);
       }
       else
       {
-          WriteAGLog(".2B");
-        ret =  g_pWsHook->connect(s, (SOCKADDR*)&stSvrAddrIn/*name*/, sizeof(SOCKADDR)/*namelen*/);
+        OutputDebugLog(".2B");
+        SOCKADDR_IN stSvrAddr = {0};
+        stSvrAddr.sin_family = AF_INET;
+        stSvrAddr.sin_port = htons(shared_proxy_port);
+        stSvrAddr.sin_addr.s_addr = inet_addr(shared_proxy_ip);
+
+        ret =  g_pWsHook->connect(s, (SOCKADDR*)&stSvrAddr/*name*/, sizeof(SOCKADDR)/*namelen*/);
       }
 
       if (SOCKET_ERROR == ret)
       {
-        WriteAGLog("ret==SOCKET_ERROR");
+        OutputDebugLog("ret==SOCKET_ERROR");
       }
     }
   }__except(1){
-    WriteAGLog("connect_AGHook Failed");
+    OutputDebugLog("amhook_connect Failed");
   }
-  WriteAGLog("connect_AGHook End");
+  OutputDebugLog("amhook_connect End");
   return ret;
 }
-
-
-///////////////////////////////////
-
-
 
 ////////////
 CWs2Hook::CWs2Hook()
   :hook_(0),_connect(0)
 
 {
-  WriteAGLog("CWs2Hook::CWs2Hook");
   InitializeCriticalSection(&cs);
 
 }
 
 CWs2Hook::~CWs2Hook()
 {
-WriteAGLog("CWs2Hook::~CWs2Hook");
-if (g_pWsHook == this)
+  if (g_pWsHook == this)
   {
     g_pWsHook = NULL;
-    //hook.removeHook(_connect);
     Destroy();
     //_connect = NULL;
   }
@@ -137,54 +130,39 @@ if (g_pWsHook == this)
 }
 void CWs2Hook::Destroy(void)
 {
-WriteAGLog("CWs2Hook::Destroy");
-if( hook_)
-    {
-  delete hook_;
-  hook_ = NULL;
-  
-    }
-    _connect = NULL;
+
+  if( hook_)
+  {
+    delete hook_;
+    hook_ = NULL;
+
+  }
+  _connect = NULL;
 }
 
 void CWs2Hook::Init()
 {
-WriteAGLog("CWs2Hook::Init");
-if (g_pWsHook || hook_)
-    return;
 
+  if (g_pWsHook || hook_)
+    return;
 
   hook_ = new NCodeHookIA32();
   g_pWsHook = this;
-  WriteAGLog("CWs2Hook::createHookByName");
-  // install the code hooks
-  _connect = hook_->createHookByName("ws2_32.dll", "connect", AmhConnectHook);
 
-  CString str;
-  LPBYTE p = (LPBYTE)AmhConnectHook;
-  str.Format(_T("Addr[%x][%x %x %x %x %x %x]"),AmhConnectHook,p[0],p[1],p[2],p[3],p[4],p[5]);
-  ::OutputDebugString(str);
-   p = (LPBYTE)_connect;
-  str.Format(_T("Addr[%x][%x %x %x %x %x %x]"),_connect,p[0],p[1],p[2],p[3],p[4],p[5]);
-  ::OutputDebugString(str);
+  // install the code hooks
+  _connect = hook_->createHookByName("ws2_32.dll", "connect", AmhHook_Connect);
 
 }
 
-int CWs2Hook::connect(__in SOCKET s,
-__in_bcount(namelen) const struct sockaddr FAR * name,
-__in int namelen
-)
-//IN SOCKET s, const struct sockaddr FAR * name, IN int namelen)
+int CWs2Hook::connect(SOCKET s, const struct sockaddr FAR * name, int namelen)
 {
   int ret = SOCKET_ERROR;
-  WriteAGLog(" CWs2Hook::connect.Begin");
   if (_connect)
   {
-     WriteAGLog(" CWs2Hook::connect.1");
+    OutputDebugLog("connect.1B");
     ret = _connect(s, name, namelen);
-   WriteAGLog(" CWs2Hook::connect.2");
+    OutputDebugLog("connect.2B");
   }
-  WriteAGLog(" CWs2Hook::connect.END");
   return ret;
 }
 
