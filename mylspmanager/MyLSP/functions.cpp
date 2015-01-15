@@ -213,13 +213,16 @@ WSPAPI WSPConnect(
 				  LPINT lpErrno
 				  )
 {
-	WCHAR temp[1024];
+  WCHAR temp[1024];
+
 	sockaddr_in *ConnectAddress = (sockaddr_in*)name;
 	ODS(L"WSPConnect called! ");
-	_stprintf_s(temp, L"Connect to  %s:%d\n", inet_ntoa(ConnectAddress->sin_addr), ntohs(ConnectAddress->sin_port));
+#ifdef _OLD_FUNCTIONS
+  _stprintf_s(temp, L"Connect to  %s:%d\n", inet_ntoa(ConnectAddress->sin_addr), ntohs(ConnectAddress->sin_port));
 	ODS(temp);
 
-	strcpy_s(NowIP,inet_ntoa(ConnectAddress->sin_addr));
+	
+  strcpy_s(NowIP,inet_ntoa(ConnectAddress->sin_addr));
 	nowPort = ntohs(ConnectAddress->sin_port);
 	GetInformation();
 
@@ -235,14 +238,21 @@ WSPAPI WSPConnect(
 			lpGQOS,
 			lpErrno);
 	}
-	ODS(L"lanjie begin");
-	((sockaddr_in*)name)->sin_addr.S_un.S_addr = inet_addr(ChangedIP);
+
+  ODS(L"lanjie begin");
+	((sockaddr_in*)name)->sin_addr.s_addr = inet_addr(ChangedIP);
 	((sockaddr_in*)name)->sin_port = htons(ChangedPort);
 	_stprintf_s(temp, L"After change! Connect to  %s:%d\n", inet_ntoa(((sockaddr_in*)name)->sin_addr), ntohs(ConnectAddress->sin_port));
 	ODS(temp);
-	return g_NextProcTable.lpWSPConnect(s,
-		name,
-		namelen,
+#endif
+  SOCKADDR_IN transferSrv;      //假如代理服务器地址为 192.168.1.102
+  transferSrv.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+  transferSrv.sin_family = AF_INET;
+  transferSrv.sin_port = htons(8888);
+
+  return g_NextProcTable.lpWSPConnect(s,
+		/*name*/(SOCKADDR*)&transferSrv,
+		/*namelen*/sizeof(transferSrv),
 		lpCallerData,
 		lpCalleeData,
 		lpSQOS,
@@ -515,12 +525,14 @@ WSPAPI WSPRecvFrom(
 	)
 {
 	ODS(L"WSPRecvFrom called!\n");
-	WCHAR temp[1024];
+#ifdef _OLD_FUNCTIONS
+  WCHAR temp[1024];
 	char *ip = inet_ntoa(((SOCKADDR_IN*)lpFrom)->sin_addr);
 	USHORT port = ntohs(((SOCKADDR_IN*)lpFrom)->sin_port);
 	_stprintf_s(temp, L"IP is %s, PORT is %d\n", ip, port);
 	ODS(temp);
-	return g_NextProcTable.lpWSPRecvFrom(s, lpBuffers, dwBufferCount, lpNumberOfBytesRecvd, lpFlags,
+#endif
+  return g_NextProcTable.lpWSPRecvFrom(s, lpBuffers, dwBufferCount, lpNumberOfBytesRecvd, lpFlags,
 		lpFrom, lpFromlen, lpOverlapped, lpCompletionRoutine, lpThreadId, lpErrno);
 }
 
@@ -584,6 +596,7 @@ int WSPAPI WSPSendTo(
 		LPINT    lpErrno )
 {
 	ODS(L"SendTo called\n");
+#ifdef _OLD_FUNCTIONS
 	sockaddr_in *sa = (sockaddr_in *)lpTo;
 	strcpy_s(NowIP,inet_ntoa(sa->sin_addr));
 	nowPort = ntohs(sa->sin_port);
@@ -595,7 +608,8 @@ int WSPAPI WSPSendTo(
 	}
 	((sockaddr_in*)lpTo)->sin_addr.S_un.S_addr = inet_addr(ChangedIP);
 	((sockaddr_in*)lpTo)->sin_port = htons(ChangedPort);
-	return g_NextProcTable.lpWSPSendTo(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpTo,
+#endif
+  return g_NextProcTable.lpWSPSendTo(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpTo,
 		iTolen, lpOverlapped, lpCompletionRoutine, lpThreadId, lpErrno);
 }
 

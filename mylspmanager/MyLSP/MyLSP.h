@@ -24,10 +24,10 @@ static WSPUPCALLTABLE g_pUpCallTable;
 static WSPPROC_TABLE g_NextProcTable;
 static TCHAR g_szCurrentApp[MAX_PATH];
 
-static char ChangedIP[IP_MAX_LENGTH] = "23.88.59.59";
+static char ChangedIP[IP_MAX_LENGTH] = "127.0.0.1";
 static char OrigIP[IP_MAX_LENGTH] = "";
 static char NowIP[IP_MAX_LENGTH];
-static unsigned short ChangedPort = 80, origPort = 80, nowPort = 0;
+static unsigned short ChangedPort = 8888, origPort = 80, nowPort = 0;
 static char lanjie = 0;
 
 

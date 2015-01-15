@@ -63,6 +63,8 @@ BEGIN_MESSAGE_MAP(CmyLspUiDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+  ON_BN_CLICKED(IDC_BUTTON_INSTALL, &CmyLspUiDlg::OnBnClickedButtonInstall)
+  ON_BN_CLICKED(IDC_BUTTON_UNINSTALL, &CmyLspUiDlg::OnBnClickedButtonUninstall)
 END_MESSAGE_MAP()
 
 
@@ -151,3 +153,50 @@ HCURSOR CmyLspUiDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+#include "..\LSPManager\manager.h"
+
+void CmyLspUiDlg::OnBnClickedButtonInstall()
+{
+  // TODO: 在此添加控件通知处理程序代码
+  typedef LSPERROR (* LSPFUNC)();
+
+  HINSTANCE hDll = NULL;
+  hDll = ::LoadLibrary(_T("LSPManager.dll"));
+  LSPFUNC funcStartup=0;
+  funcStartup = (LSPFUNC)::GetProcAddress(hDll,"InstallLSP");
+
+  if(funcStartup)
+  {
+  LSPERROR ret = funcStartup();
+
+  CString str;
+  str.Format(_T("完成，ret = %d"),ret);
+  AfxMessageBox(str);
+
+  }
+
+  FreeLibrary(hDll);
+
+}
+
+
+void CmyLspUiDlg::OnBnClickedButtonUninstall()
+{
+  // TODO: 在此添加控件通知处理程序代码
+  typedef LSPERROR (* LSPFUNC)();
+
+  HINSTANCE hDll = NULL;
+  hDll = ::LoadLibrary(_T("LSPManager.dll"));
+  LSPFUNC funcStartup=0;
+  funcStartup = (LSPFUNC)::GetProcAddress(hDll,"RemoveLSP");
+  if(funcStartup)
+  {
+  LSPERROR ret = funcStartup();
+
+  CString str;
+  str.Format(_T("完成，ret = %d"),ret);
+  AfxMessageBox(str);
+  }
+  FreeLibrary(hDll);
+
+}
