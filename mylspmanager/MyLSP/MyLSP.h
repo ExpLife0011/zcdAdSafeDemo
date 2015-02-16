@@ -32,6 +32,7 @@ static char lanjie = 0;
 
 
 DWORD GetInformation();
+
 SOCKET
 WSPAPI  WSPAccept(
 	SOCKET s,

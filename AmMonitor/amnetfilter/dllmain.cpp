@@ -9,6 +9,7 @@ extern WptHook * global_hook;
 #include "helper.h"
 
 const TCHAR szApp[] = _T("DllPart.dll");
+TCHAR szCurrentHostApp[_MAX_PATH] = {0};
 
 HINSTANCE g_hInstance = NULL;
 //HHOOK global_hCallwndHook = NULL;
@@ -185,6 +186,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     {
      // ::MessageBeep(MB_OK);
     // This is called VERY early in a process - only use kernel32.dll
+      GetModuleFileName(NULL,szCurrentHostApp,_MAX_PATH);
     // functions.
       ok = FALSE; // Don't load by default, only if we are actively testing
       TCHAR path[MAX_PATH]={0};

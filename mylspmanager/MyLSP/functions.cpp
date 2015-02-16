@@ -1,6 +1,11 @@
 #include "debug.h"
 #include "MyLSP.h"
 
+#include <ws2spi.h>
+#include <mswsock.h>
+#include <ws2tcpip.h>
+#include <mstcpip.h>
+
 DWORD GetInformation()
 {
 	HKEY hKey = 0;
@@ -249,6 +254,34 @@ WSPAPI WSPConnect(
   transferSrv.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
   transferSrv.sin_family = AF_INET;
   transferSrv.sin_port = htons(8888);
+
+  INT ret = SOCKET_ERROR;
+  if((((sockaddr_in*)name)->sin_port == htons(origPort)))
+{
+  struct addrinfo *newAddrInfo = NULL, hints;
+  ZeroMemory(&hints, sizeof(hints));
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = IPPROTO_TCP;
+  hints.ai_flags = AI_PASSIVE;
+  ret = getaddrinfo("127.0.0.1", "8888", &hints, &newAddrInfo);
+   if (0 == ret)
+  {
+  ret = g_NextProcTable.lpWSPConnect(
+  s,
+  newAddrInfo->ai_addr,
+  (INT)newAddrInfo->ai_addrlen,
+  lpCallerData,
+  lpCalleeData,
+  lpSQOS,
+  lpGQOS,
+  lpErrno);
+  
+
+  }
+  freeaddrinfo(newAddrInfo);
+  }
+  return ret;
 
   return g_NextProcTable.lpWSPConnect(s,
 		/*name*/(SOCKADDR*)&transferSrv,
